@@ -22,7 +22,7 @@ class Device(object):
         standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
         
         standbyStateXml = etree.fromstring(standbyState)
-        return standbyStateXml[0].find("{urn:av-openhome-org:service:Product:2}StandbyResponse/Value").text.encode('utf-8') == "true"
+        return standbyStateXml[0].find("{urn:av-openhome-org:service:Product:2}StandbyResponse/Value").text == "true"
 
     def RadioTransportState(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
