@@ -1,6 +1,5 @@
 
 import re
-import httplib
 import socket
 import xml.etree.ElementTree as etree
 

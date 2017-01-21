@@ -1,7 +1,7 @@
 import requests
 
-from Upnp.Device import RootDevice
-from Upnp.Soap import soapRequest
+from openhomedevice.Upnp.Device import RootDevice
+from openhomedevice.Upnp.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
 
@@ -26,14 +26,14 @@ class Device(object):
         transportState = soapRequest(service.ControlUrl(), service.Type(), "TransportState", "")
 
         transportStateXml = etree.fromstring(transportState)
-        return transportStateXml[0].find("{urn:av-openhome-org:service:Radio:1}TransportStateResponse/Value").text.encode('utf-8')
+        return transportStateXml[0].find("{urn:av-openhome-org:service:Radio:1}TransportStateResponse/Value").text
 
     def PlaylistTransportState(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
         transportState = soapRequest(service.ControlUrl(), service.Type(), "TransportState", "")
 
         transportStateXml = etree.fromstring(transportState)
-        return transportStateXml[0].find("{urn:av-openhome-org:service:Playlist:1}TransportStateResponse/Value").text.encode('utf-8')
+        return transportStateXml[0].find("{urn:av-openhome-org:service:Playlist:1}TransportStateResponse/Value").text
 
     def TransportState(self):
         source = self.Source()
@@ -48,13 +48,13 @@ class Device(object):
         source = soapRequest(service.ControlUrl(), service.Type(), "SourceIndex", "")
 
         sourceXml = etree.fromstring(source)
-        sourceIndex = sourceXml[0].find("{urn:av-openhome-org:service:Product:2}SourceIndexResponse/Value").text.encode('utf-8')
+        sourceIndex = sourceXml[0].find("{urn:av-openhome-org:service:Product:2}SourceIndexResponse/Value").text
 
-        sourceInfo = soapRequest(service.ControlUrl(), service.Type(), "Source", ("<Index>%s</Index>" % sourceIndex))
+        sourceInfo = soapRequest(service.ControlUrl(), service.Type(), "Source", ("<Index>%s</Index>" % int(sourceIndex)))
         sourceInfoXml = etree.fromstring(sourceInfo)
 
-        sourceName = sourceInfoXml[0].find("{urn:av-openhome-org:service:Product:2}SourceResponse/Name").text.encode('utf-8')
-        sourceType = sourceInfoXml[0].find("{urn:av-openhome-org:service:Product:2}SourceResponse/Type").text.encode('utf-8')
+        sourceName = sourceInfoXml[0].find("{urn:av-openhome-org:service:Product:2}SourceResponse/Name").text
+        sourceType = sourceInfoXml[0].find("{urn:av-openhome-org:service:Product:2}SourceResponse/Type").text
         
         return {
             "type": sourceType,
@@ -78,21 +78,9 @@ class Device(object):
 
         trackDetails = {}
 
-        trackDetails['title'] =  title.text.encode('utf-8') if title != None else None    
-        trackDetails['album'] =  album.text.encode('utf-8') if album != None else None
-        trackDetails['albumArt'] =  albumArt.text.encode('utf-8') if albumArt != None else None
-        trackDetails['artist'] =  artist.text.encode('utf-8') if artist != None else None
+        trackDetails['title'] =  title.text if title != None else None
+        trackDetails['album'] =  album.text if album != None else None
+        trackDetails['albumArt'] =  albumArt.text if albumArt != None else None
+        trackDetails['artist'] =  artist.text if artist != None else None
 
         return trackDetails
-
-    def listStateVars(self, serviceId):
-        service = self.rootDevice.Device.Service(serviceId)
-        service.ParseXmlDesc(requests.get(service.ScpdUrl()).text)
-        for stateVar in service.StateVarList():
-            print stateVar.Name()
-
-    def listActionVars(self, serviceId):
-        service = self.rootDevice.Device.Service(serviceId)
-        service.ParseXmlDesc(requests.get(service.ScpdUrl()).text)
-        for action in service.ActionList():
-            print action.Name()
