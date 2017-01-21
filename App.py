@@ -12,6 +12,7 @@ if __name__ == '__main__':
         openhomeDevice = Device(location)
         print("----")
         print("NAME     : %s" % openhomeDevice.FriendlyName())
+        print("UUID     : %s" % openhomeDevice.Uuid())
         print("SOURCE   : %s" % openhomeDevice.Source())
         print("STANDBY  : %s" % openhomeDevice.StandbyState())
         print("STATE    : %s" % openhomeDevice.TransportState())

@@ -11,6 +11,9 @@ class Device(object):
         xmlDesc = requests.get(location).text.encode('utf-8')
         self.rootDevice = RootDevice(xmlDesc, location)
 
+    def Uuid(self):
+        return self.rootDevice.Device().Uuid()
+
     def FriendlyName(self):
         return self.rootDevice.Device().FriendlyName()
 
