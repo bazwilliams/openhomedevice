@@ -17,7 +17,7 @@ class Device(object):
     def FriendlyName(self):
         return self.rootDevice.Device().FriendlyName()
 
-    def StandbyState(self):
+    def IsInStandby(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
         standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
         
@@ -63,6 +63,20 @@ class Device(object):
             "type": sourceType,
             "name": sourceName
         }
+
+    def VolumeLevel(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        volume = soapRequest(service.ControlUrl(), service.Type(), "Volume", "")
+
+        volumeXml = etree.fromstring(volume)
+        return int(volumeXml[0].find("{urn:av-openhome-org:service:Volume:2}VolumeResponse/Value").text)
+
+    def IsMuted(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        mute = soapRequest(service.ControlUrl(), service.Type(), "Mute", "")
+
+        muteXml = etree.fromstring(mute)
+        return muteXml[0].find("{urn:av-openhome-org:service:Volume:2}MuteResponse/Value").text == "true"
 
     def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
