@@ -139,15 +139,15 @@ class Device(object):
     def SetVolumeLevel(self, volumeLevel):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
         valueString = ("<Value>%s</Value>" % int(volumeLevel))
-        volume = soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
+        soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
 
     def IncreaseVolume(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
-        volume = soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
+        soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
 
     def DecreaseVolume(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
-        volume = soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
+        soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
 
     def IsMuted(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
@@ -163,7 +163,34 @@ class Device(object):
             valueString = "<Value>1</Value>"
         else:
             valueString = "<Value>0</Value>"
-        mute = soapRequest(service.ControlUrl(), service.Type(), "SetMute", valueString)
+        soapRequest(service.ControlUrl(), service.Type(), "SetMute", valueString)
+
+    def SetSource(self, index):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
+        valueString = ("<Value>%s</Value>" % int(index))
+        soapRequest(service.ControlUrl(), service.Type(), "SetSourceIndex", valueString)
+
+    def Sources(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
+        sources = soapRequest(service.ControlUrl(), service.Type(), "SourceXml", "")
+
+        sourcesXml = etree.fromstring(sources)
+        sourcesList = sourcesXml[0].find("{urn:av-openhome-org:service:Product:2}SourceXmlResponse/Value").text
+
+        sourcesListXml = etree.fromstring(sourcesList)
+
+        sources = []
+        index = 0
+        for sourceXml in sourcesListXml:
+            visible = sourceXml.find("Visible").text == "true"
+            if (visible):
+                sources.append({
+                    "index": index,
+                    "name": sourceXml.find("Name").text,
+                    "type": sourceXml.find("Type").text
+                })
+            index = index + 1
+        return sources
 
     def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")

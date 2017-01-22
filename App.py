@@ -19,4 +19,5 @@ if __name__ == '__main__':
         print("TRACK    : %s" % openhomeDevice.TrackInfo())
         print("VOLUME   : %s" % openhomeDevice.VolumeLevel())
         print("MUTED    : %s" % openhomeDevice.IsMuted())
+        print("SOURCES  : %s" % openhomeDevice.Sources())
     print("----")
