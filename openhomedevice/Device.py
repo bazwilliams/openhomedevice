@@ -17,6 +17,16 @@ class Device(object):
     def FriendlyName(self):
         return self.rootDevice.Device().FriendlyName()
 
+    def SetStandby(self, standbyRequested):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
+
+        valueString = None
+        if standbyRequested:
+            valueString = "<Value>1</Value>"
+        else:
+            valueString = "<Value>0</Value>"
+        soapRequest(service.ControlUrl(), service.Type(), "SetStandby", valueString)
+
     def IsInStandby(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
         standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
@@ -71,12 +81,34 @@ class Device(object):
         volumeXml = etree.fromstring(volume)
         return int(volumeXml[0].find("{urn:av-openhome-org:service:Volume:2}VolumeResponse/Value").text)
 
+    def SetVolumeLevel(self, volumeLevel):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        valueString = ("<Value>%s</Value>" % int(volumeLevel))
+        volume = soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
+
+    def IncreaseVolume(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        volume = soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
+
+    def DecreaseVolume(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        volume = soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
+
     def IsMuted(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
         mute = soapRequest(service.ControlUrl(), service.Type(), "Mute", "")
 
         muteXml = etree.fromstring(mute)
         return muteXml[0].find("{urn:av-openhome-org:service:Volume:2}MuteResponse/Value").text == "true"
+
+    def SetMute(self, muteRequested):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+        valueString = None
+        if muteRequested:
+            valueString = "<Value>1</Value>"
+        else:
+            valueString = "<Value>0</Value>"
+        mute = soapRequest(service.ControlUrl(), service.Type(), "SetMute", valueString)
 
     def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
