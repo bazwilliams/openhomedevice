@@ -11,7 +11,8 @@ if __name__ == '__main__':
     for location in locations:
         openhomeDevice = Device(location)
         print("----")
-        print("NAME     : %s" % openhomeDevice.FriendlyName())
+        print("NAME     : %s" % openhomeDevice.Name())
+        print("ROOM     : %s" % openhomeDevice.Room())
         print("UUID     : %s" % openhomeDevice.Uuid())
         print("SOURCE   : %s" % openhomeDevice.Source())
         print("STANDBY  : %s" % openhomeDevice.IsInStandby())

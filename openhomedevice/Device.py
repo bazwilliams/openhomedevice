@@ -14,8 +14,19 @@ class Device(object):
     def Uuid(self):
         return self.rootDevice.Device().Uuid()
 
-    def FriendlyName(self):
-        return self.rootDevice.Device().FriendlyName()
+    def Name(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
+        product = soapRequest(service.ControlUrl(), service.Type(), "Product", "")
+
+        productXml = etree.fromstring(product)
+        return productXml[0].find("{urn:av-openhome-org:service:Product:2}ProductResponse/Name").text.encode('utf-8')
+
+    def Room(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
+        product = soapRequest(service.ControlUrl(), service.Type(), "Product", "")
+
+        productXml = etree.fromstring(product)
+        return productXml[0].find("{urn:av-openhome-org:service:Product:2}ProductResponse/Room").text.encode('utf-8')
 
     def SetStandby(self, standbyRequested):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
@@ -197,6 +208,10 @@ class Device(object):
         trackInfo = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
         
         trackInfoXml = etree.fromstring(trackInfo)
+
+        if (trackInfoXml[0][0].find('Metadata').text == None):
+            return {}
+
         metadata = trackInfoXml[0][0].find('Metadata').text.encode('utf-8')
 
         metadataXml = etree.fromstring(metadata)
