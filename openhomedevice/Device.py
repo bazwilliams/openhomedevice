@@ -208,11 +208,10 @@ class Device(object):
         trackInfo = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
         
         trackInfoXml = etree.fromstring(trackInfo)
+        metadata = trackInfoXml[0][0].find('Metadata').text
 
-        if (trackInfoXml[0][0].find('Metadata').text == None):
+        if (metadata == None):
             return {}
-
-        metadata = trackInfoXml[0][0].find('Metadata').text.encode('utf-8')
 
         metadataXml = etree.fromstring(metadata)
         itemElement = metadataXml.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item")
