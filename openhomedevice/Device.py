@@ -1,7 +1,7 @@
 import requests
 
-from openhomedevice.Upnp.Device import RootDevice
-from openhomedevice.Upnp.Soap import soapRequest
+from openhomedevice.RootDevice import RootDevice
+from openhomedevice.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
 

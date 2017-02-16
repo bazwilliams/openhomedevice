@@ -1,5 +1,5 @@
 import re
-from openhomedevice.Upnp import Service
+from openhomedevice import Service
 import xml.etree.ElementTree as etree
 from threading import Thread
 

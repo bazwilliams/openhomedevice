@@ -1,13 +1,14 @@
 from distutils.core import setup
 setup(
-  name = 'py-openhome-device',
-  packages = ['py-openhome-device'],
-  version = '0.1',
+  name = 'openhomedevice',
+  packages = ['openhomedevice'],
+  version = '0.2',
   description = 'Provides an API for requesting information from an Openhome device',
   author = 'Barry John Williams',
   author_email = 'barry@bjw.me.uk',
   url = 'https://github.com/bazwilliams/openhomedevice',
-  download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/0.1',
+  download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/0.2',
   keywords = ['upnp', 'dlna', 'openhome', 'linn', 'ds', 'music', 'render'],
+  install_requires = ['requests', 'lxml'],
   classifiers = [],
 )
