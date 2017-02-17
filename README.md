@@ -2,6 +2,10 @@
 
 Library to provide an API to an existing openhome device. The device needs to have been discovered first by something like netdisco (https://github.com/home-assistant/netdisco).
 
+## Installation
+
+`pip install openhomedevice`
+
 ## API
 
 ### Constuctor
@@ -12,30 +16,38 @@ Device(location)
 
 ### Methods
 
+#### Control
+
 ```python
-    Uuid() #Unique identifier
-    Name() #Name of device
-    Room() #Name of room
+
     SetStandby(standbyRequested) #bool
-    IsInStandby() #returns true if in standby
-    TransportState() #returns one of Stopped, Playing, Paused or Buffering. 
     Play() #starts playback
     Stop() #stops playback
     Pause() #pauses playback
     Skip(offset) #positive or negative integer
-    Source() #returns a source dictionary
-    VolumeLevel() #returns the volume setting
     SetVolumeLevel(volumeLevel) #positive number
     IncreaseVolume() #increase volume by 1
     DecreaseVolume() #decrease volume by 1
-    IsMuted() #returns true if muted
     SetMute(muteRequested) #bool
     SetSource(index) #positive integer (use Sources() for indices)
+```
+
+#### Informational
+
+```python
+    Uuid() #Unique identifier
+    Name() #Name of device
+    Room() #Name of room
+    IsInStandby() #returns true if in standby
+    TransportState() #returns one of Stopped, Playing, Paused or Buffering.
+    VolumeLevel() #returns the volume setting
+    IsMuted() #returns true if muted
+    Source() #returns the currently connected source as a dictionary
     Sources() #returns an array of source dictionaries with indices
     TrackInfo() #returns a track dictionary
 ```
 
-#### Source Response
+##### Source Response
 
 ```python
 {
@@ -44,7 +56,7 @@ Device(location)
 }
 ```
 
-#### Sources Response
+##### Sources Response
 
 ```python
 [
@@ -55,7 +67,7 @@ Device(location)
 ]
 ```
 
-#### TrackInfo Response
+##### TrackInfo Response
 
 ```python
 {
