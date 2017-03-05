@@ -40,8 +40,9 @@ Device(location)
     Room() #Name of room
     IsInStandby() #returns true if in standby
     TransportState() #returns one of Stopped, Playing, Paused or Buffering.
-    VolumeLevel() #returns the volume setting
-    IsMuted() #returns true if muted
+    VolumeEnabled() #returns true if the volume service is available
+    VolumeLevel() #returns the volume setting or None if disabled
+    IsMuted() #returns true if muted or None if disabled
     Source() #returns the currently connected source as a dictionary
     Sources() #returns an array of source dictionaries with indices
     TrackInfo() #returns a track dictionary
