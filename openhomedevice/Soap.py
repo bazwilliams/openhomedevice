@@ -13,7 +13,7 @@ def soapRequest(location, service, fnName, fnParams):
     headers = {
         'Content-Type': 'text/xml',
         'Accept': 'text/xml',
-        'SOAPAction': service + '#' + fnName
+        'SOAPAction': '\"' + service + '#' + fnName + '\"'
     }
 
     res = requests.post(location, data=bodyString, headers=headers)
