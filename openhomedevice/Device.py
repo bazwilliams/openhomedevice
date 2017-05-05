@@ -220,6 +220,9 @@ class Device(object):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
         trackInfo = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
         
+        print "-----"
+        print trackInfo
+        print "-----"
         trackInfoXml = etree.fromstring(trackInfo)
         metadata = trackInfoXml[0][0].find("Metadata").text
 
