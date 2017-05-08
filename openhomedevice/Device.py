@@ -2,6 +2,7 @@ import requests
 import re
 
 from openhomedevice.RootDevice import RootDevice
+from openhomedevice.TrackInfoParser import TrackInfoParser
 from openhomedevice.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
@@ -218,83 +219,8 @@ class Device(object):
 
     def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
-        trackInfo = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
+        trackInfoString = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
+
+        trackInfoParser = TrackInfoParser(trackInfoString)
         
-        print "-----"
-        print trackInfo
-        print "-----"
-        trackInfoXml = etree.fromstring(trackInfo)
-        metadata = trackInfoXml[0][0].find("Metadata").text
-
-        if metadata is None:
-            return {}
-
-        metadataXml = etree.fromstring(metadata)
-        itemElement = metadataXml.find("DIDL-Lite:item", { 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/' })
-        
-        trackDetails = {}
-
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:class", "type", False)
-#    "provider": "{provider}" // oh:provider
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:title", "title", False)
-#    "artwork": "{artwork}" // oh:artwork
-        self.TrackDetailBuilder(trackDetails, itemElement, "DIDL-Lite:res", "uri", False)
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:artist", "artist", False) #array
-#    "composer": [ "{composer1}", "{composer2}" ] // upnp:artist @role=composer
-#    "conductor": [ "{conductor1}", "{conductor2}" ] // upnp:artist @role=conductor
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:genre", "genre", False) #array
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:album", "albumTitle", False) #array
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:albumArtURI", "albumArtwork", False)
-#    "albumArtist": [ "{albumArtist1}", "{albumArtist2}" ] // upnp:artist @role=AlbumArtist
-#    "albumGenre": [ "{albumGenre1}", "{albumArtist2}" ] // upnp:genre
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:date", "year", True)
-#    "disc": {disc} // oh:originalDiscNumber
-#    "discs": {discs} // oh:originalDiscCount
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:originalTrackNumber", "track", True)
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:originalTrackCount", "tracks", True)
-#    "channels": {channels} // DIDL-Lite:res @nrAudioChannels
-#    "bitDepth": {bitDepth} // DIDL-Lite:res @bitsPerSample
-#    "sampleRate": {sampleRate} // DIDL-Lite:res @sampleFrequency
-#    "bitRate": {bitRate} // DIDL-Lite:res @bitrate
-#    "duration": {duration} // DIDL-Lite:res @duration // seconds, zero = live/eternal
-#    "mimeType": "{mimeType}" // DIDL-Lite:res @protocolInfo
-#    "work": "{work}" // oh:work
-#    "movement": "{movement}" // oh:movement
-#    "show": "{show}" // oh:show
-#    "episode": {episode} // oh:episodeNumber
-#    "episodes": {episodes} // oh:episodeCount
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:author", "author", False) #array
-#    "narrator": [ "{narrator1}", "{narrator2}" ] // upnp:artist @role=narrator
-#    "performer": [ "{performer1}", "{performer2}" ] // upnp:artist @role=performer
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:publisher", "publisher", False) #array
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:published", "published", False) #array
-#    "website": "{website}" // oh:website
-#    "location": "{location}" // oh:location // ISO 6709
-#    "details": "{details}" // oh:details
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:description", "description", False)
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:rating", "rating", False) #array
-#    "extensions": "{extensions}" // oh:extensions // stringified json
-
-        return trackDetails
-
-    def TrackDetailBuilder(self, trackDetails, itemElement, itemKey, targetKey, isNumber):
-        intFinder = re.compile('\d+')
-
-        namespaces = {
-                'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
-		'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
-                'dc': 'http://purl.org/dc/elements/1.1/'
-	}
-
-        value = itemElement.find(itemKey, namespaces)
-        parsedValue = None
-
-        if value != None:
-            if isNumber:
-                numbers = intFinder.findall(value.text)
-                if (len(numbers) > 0):
-                    parsedValue = numbers[0]
-            else:
-                parsedValue = value.text
-
-        trackDetails[targetKey] = parsedValue
+        return trackInfoParser.TrackInfo()
