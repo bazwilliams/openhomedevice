@@ -72,10 +72,44 @@ Device(location)
 
 ```python
 {
-    'album': 'DROGAS Light',
-    'artist': 'Lupe Fiasco',
-    'albumArt': 'https://resources.tidal.com/images/c8333ef0/ae18/4464/9a69/b99401b82ed7/320x320.jpg',
-    'title': 'Dopamine Lit (Intro)'
+  "mimeType": "http-get:*:audio/x-flac:DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000",
+  "rating": None,
+  "performer": [
+    "Fahmi Alqhai, Performer - Johann Sebastian Bach, Composer"
+  ],
+  "bitDepth": 16,
+  "channels": 2,
+  "disc": None,
+  "composer": [],
+  "year": 2017,
+  "duration": 460,
+  "author": [],
+  "albumArtist": [],
+  "type": "object.item.audioItem.musicTrack",
+  "narrator": [],
+  "description": None,
+  "conductor": [],
+  "albumArtwork": "http://static.qobuz.com/images/covers/58/20/8424562332058_600.jpg",
+  "track": 2,
+  "tracks": None,
+  "artwork": None,
+  "genre": [
+    "Klassiek"
+  ],
+  "publisher": "Glossa",
+  "albumGenre": [
+    "Klassiek"
+  ],
+  "artist": [
+    "Fahmi Alqhai"
+  ],
+  "bitRate": None,
+  "albumTitle": "The Bach Album",
+  "uri": "http://192.168.0.110:58050/stream/audio/b362f0f7a1ff33b176bcf2adde75af96.flac",
+  "discs": None,
+  "published": None,
+  "title": "Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba) : Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba): II. Fuga",
+  "sampleRate": 44100
 }
 ```
 

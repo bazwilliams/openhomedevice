@@ -1,6 +1,8 @@
 import requests
+import re
 
 from openhomedevice.RootDevice import RootDevice
+from openhomedevice.TrackInfoParser import TrackInfoParser
 from openhomedevice.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
@@ -217,27 +219,8 @@ class Device(object):
 
     def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
-        trackInfo = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
+        trackInfoString = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
+
+        trackInfoParser = TrackInfoParser(trackInfoString)
         
-        trackInfoXml = etree.fromstring(trackInfo)
-        metadata = trackInfoXml[0][0].find("Metadata").text
-
-        if metadata is None:
-            return {}
-
-        metadataXml = etree.fromstring(metadata)
-        itemElement = metadataXml.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item")
-        
-        albumArt = itemElement.find("{urn:schemas-upnp-org:metadata-1-0/upnp/}albumArtURI")
-        album = itemElement.find("{urn:schemas-upnp-org:metadata-1-0/upnp/}album")
-        artist = itemElement.find("{urn:schemas-upnp-org:metadata-1-0/upnp/}artist")
-        title = itemElement.find("{http://purl.org/dc/elements/1.1/}title")
-
-        trackDetails = {}
-
-        trackDetails['title'] =  title.text if title != None else None
-        trackDetails['album'] =  album.text if album != None else None
-        trackDetails['albumArt'] =  albumArt.text if albumArt != None else None
-        trackDetails['artist'] =  artist.text if artist != None else None
-
-        return trackDetails
+        return trackInfoParser.TrackInfo()
