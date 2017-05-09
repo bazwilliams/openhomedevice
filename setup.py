@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'openhomedevice',
   packages = ['openhomedevice'],
-  version = '0.2.2',
+  version = '0.3.0',
   description = 'Provides an API for requesting information from an Openhome device',
   author = 'Barry John Williams',
   author_email = 'barry@bjw.me.uk',
