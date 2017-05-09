@@ -96,9 +96,7 @@ Device(location)
   "genre": [
     "Klassiek"
   ],
-  "publisher": [
-    "Glossa"
-  ],
+  "publisher": "Glossa",
   "albumGenre": [
     "Klassiek"
   ],
@@ -106,12 +104,10 @@ Device(location)
     "Fahmi Alqhai"
   ],
   "bitRate": None,
-  "albumTitle": [
-    "The Bach Album"
-  ],
+  "albumTitle": "The Bach Album",
   "uri": "http://192.168.0.110:58050/stream/audio/b362f0f7a1ff33b176bcf2adde75af96.flac",
   "discs": None,
-  "published": [],
+  "published": None,
   "title": "Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba) : Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba): II. Fuga",
   "sampleRate": 44100
 }

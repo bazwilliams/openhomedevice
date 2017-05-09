@@ -7,6 +7,7 @@ class TrackInfoParser(object):
 
     def __init__(self, trackInfo):
         trackInfoXml = etree.fromstring(trackInfo)
+        print trackInfo
         self.metadata = trackInfoXml[0][0].find("Metadata").text
 
     def TrackInfo(self):
@@ -30,7 +31,7 @@ class TrackInfoParser(object):
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:artist[@role='AlbumArtist']", "albumArtist", False, True)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:genre", "genre", False, True)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:genre", "albumGenre", False, True)
-        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:album", "albumTitle", False, True)
+        self.TrackDetailBuilder(trackDetails, itemElement, "upnp:album", "albumTitle", False, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:albumArtURI", "albumArtwork", False, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:artworkURI", "artwork", False, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "dc:date", "year", True, False)
@@ -39,8 +40,8 @@ class TrackInfoParser(object):
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:originalTrackNumber", "track", True, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:originalTrackCount", "tracks", True, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "dc:author", "author", False, True)
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:publisher", "publisher", False, True)
-        self.TrackDetailBuilder(trackDetails, itemElement, "dc:published", "published", False, True)
+        self.TrackDetailBuilder(trackDetails, itemElement, "dc:publisher", "publisher", False, False)
+        self.TrackDetailBuilder(trackDetails, itemElement, "dc:published", "published", False, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "dc:description", "description", False, False)
         self.TrackDetailBuilder(trackDetails, itemElement, "upnp:rating", "rating", False, False)
         self.TrackDetailAttributeBuilder(trackDetails, itemElement, "DIDL-Lite:res", "nrAudioChannels", "channels", True)
