@@ -19,36 +19,36 @@ class TrackInfoParser(object):
 
         trackDetails = {}
 
-        trackDetails["type"] = self.TrackDetailBuilder(itemElement, "upnp:class", False, False)
-        trackDetails["title"] = self.TrackDetailBuilder(itemElement, "dc:title", False, False)
-        trackDetails["uri"] = self.TrackDetailBuilder(itemElement, "DIDL-Lite:res", False, False)
-        trackDetails["artist"] = self.TrackDetailBuilder(itemElement, "upnp:artist", False, True)
-        trackDetails["composer"] = self.TrackDetailBuilder(itemElement, "upnp:artist[@role='Composer']", False, True)
-        trackDetails["narrator"] = self.TrackDetailBuilder(itemElement, "upnp:artist[@role='Narrator']", False, True)
-        trackDetails["performer"] = self.TrackDetailBuilder(itemElement, "upnp:artist[@role='Performer']", False, True)
-        trackDetails["conductor"] = self.TrackDetailBuilder(itemElement, "upnp:artist[@role='Conductor']", False, True)
-        trackDetails["albumArtist"] = self.TrackDetailBuilder(itemElement, "upnp:artist[@role='AlbumArtist']", False, True)
-        trackDetails["genre"] = self.TrackDetailBuilder(itemElement, "upnp:genre", False, True)
-        trackDetails["albumGenre"] = self.TrackDetailBuilder(itemElement, "upnp:genre", False, True)
-        trackDetails["albumTitle"] = self.TrackDetailBuilder(itemElement, "upnp:album", False, False)
-        trackDetails["albumArtwork"] = self.TrackDetailBuilder(itemElement, "upnp:albumArtURI", False, False)
-        trackDetails["artwork"] = self.TrackDetailBuilder(itemElement, "upnp:artworkURI", False, False)
-        trackDetails["year"] = self.TrackDetailBuilder(itemElement, "dc:date", True, False)
-        trackDetails["disc"] = self.TrackDetailBuilder(itemElement, "upnp:originalDiscNumber", True, False)
-        trackDetails["discs"] = self.TrackDetailBuilder(itemElement, "upnp:originalDiscCount", True, False)
-        trackDetails["track"] = self.TrackDetailBuilder(itemElement, "upnp:originalTrackNumber", True, False)
-        trackDetails["tracks"] = self.TrackDetailBuilder(itemElement, "upnp:originalTrackCount", True, False)
-        trackDetails["author"] = self.TrackDetailBuilder(itemElement, "dc:author", False, True)
-        trackDetails["publisher"] = self.TrackDetailBuilder(itemElement, "dc:publisher", False, False)
-        trackDetails["published"] = self.TrackDetailBuilder(itemElement, "dc:published", False, False)
-        trackDetails["description"] = self.TrackDetailBuilder(itemElement, "dc:description", False, False)
-        trackDetails["rating"] = self.TrackDetailBuilder(itemElement, "upnp:rating", False, False)
-        trackDetails["channels"] = self.ParseInt(self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "nrAudioChannels"))
-        trackDetails["bitDepth"] = self.ParseInt(self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "bitsPerSample"))
-        trackDetails["sampleRate"] = self.ParseInt(self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "sampleFrequency"))
-        trackDetails["bitRate"] = self.ParseInt(self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "bitrate"))
-        trackDetails["duration"] = self.ParseInt(self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "duration"))
-        trackDetails["mimeType"] = self.TrackDetailAttributeBuilder(itemElement, "DIDL-Lite:res", "protocolInfo")
+        trackDetails["type"] = self.FindElementValue(itemElement, "upnp:class", False)
+        trackDetails["title"] = self.FindElementValue(itemElement, "dc:title", False)
+        trackDetails["uri"] = self.FindElementValue(itemElement, "DIDL-Lite:res", False)
+        trackDetails["artist"] = self.FindElementValue(itemElement, "upnp:artist", True)
+        trackDetails["composer"] = self.FindElementValue(itemElement, "upnp:artist[@role='Composer']", True)
+        trackDetails["narrator"] = self.FindElementValue(itemElement, "upnp:artist[@role='Narrator']", True)
+        trackDetails["performer"] = self.FindElementValue(itemElement, "upnp:artist[@role='Performer']", True)
+        trackDetails["conductor"] = self.FindElementValue(itemElement, "upnp:artist[@role='Conductor']", True)
+        trackDetails["albumArtist"] = self.FindElementValue(itemElement, "upnp:artist[@role='AlbumArtist']", True)
+        trackDetails["genre"] = self.FindElementValue(itemElement, "upnp:genre", True)
+        trackDetails["albumGenre"] = self.FindElementValue(itemElement, "upnp:genre", True)
+        trackDetails["albumTitle"] = self.FindElementValue(itemElement, "upnp:album", False)
+        trackDetails["albumArtwork"] = self.FindElementValue(itemElement, "upnp:albumArtURI", False)
+        trackDetails["artwork"] = self.FindElementValue(itemElement, "upnp:artworkURI", False)
+        trackDetails["year"] = self.ParseInt(self.FindElementValue(itemElement, "dc:date", False))
+        trackDetails["disc"] = self.ParseInt(self.FindElementValue(itemElement, "upnp:originalDiscNumber", False))
+        trackDetails["discs"] = self.ParseInt(self.FindElementValue(itemElement, "upnp:originalDiscCount", False))
+        trackDetails["track"] = self.ParseInt(self.FindElementValue(itemElement, "upnp:originalTrackNumber", False))
+        trackDetails["tracks"] = self.ParseInt(self.FindElementValue(itemElement, "upnp:originalTrackCount", False))
+        trackDetails["author"] = self.FindElementValue(itemElement, "dc:author", True)
+        trackDetails["publisher"] = self.FindElementValue(itemElement, "dc:publisher", False)
+        trackDetails["published"] = self.FindElementValue(itemElement, "dc:published", False)
+        trackDetails["description"] = self.FindElementValue(itemElement, "dc:description", False)
+        trackDetails["rating"] = self.FindElementValue(itemElement, "upnp:rating", False)
+        trackDetails["channels"] = self.ParseInt(self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "nrAudioChannels"))
+        trackDetails["bitDepth"] = self.ParseInt(self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "bitsPerSample"))
+        trackDetails["sampleRate"] = self.ParseInt(self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "sampleFrequency"))
+        trackDetails["bitRate"] = self.ParseInt(self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "bitrate"))
+        trackDetails["duration"] = self.ParseDuration(self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "duration"))
+        trackDetails["mimeType"] = self.FindElementAttributeValue(itemElement, "DIDL-Lite:res", "protocolInfo")
 #    "provider": "{provider}" // oh:provider
 #    "work": "{work}" // oh:work
 #    "movement": "{movement}" // oh:movement
@@ -62,16 +62,34 @@ class TrackInfoParser(object):
 
         return trackDetails
 
-    def ParseInt(self, value):
+    def ParseDuration(self, value):
+        if value == None:
+            return None
+
         intFinder = re.compile('\d+')
+        numbers = intFinder.findall(value.split('.')[0])
 
-        if value != None:
-            numbers = intFinder.findall(value)
-            if (len(numbers) > 0):
-                parsedValue = numbers[0]
+        if (len(numbers) == 3):
+            return int(numbers[2]) + (int(numbers[1]) * 60) + (int(numbers[0]) * 360)
+        if (len(numbers) == 2):
+            return int(numbers[1]) + (int(numbers[0]) * 60)
+        if (len(numbers) == 1):
+            return int(numbers[0])
 
+        return None
 
-    def TrackDetailAttributeBuilder(self, itemElement, itemKey, itemAttribute):
+    def ParseInt(self, value):
+        if value == None:
+            return None
+
+        intFinder = re.compile('\d+')
+        numbers = intFinder.findall(value)
+        if (len(numbers) > 0):
+            return int(numbers[0])
+
+        return None
+
+    def FindElementAttributeValue(self, itemElement, itemKey, itemAttribute):
         namespaces = {
                 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
 		'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
@@ -88,30 +106,27 @@ class TrackInfoParser(object):
 
         return parsedValue
 
-    def TrackDetailBuilder(self, itemElement, itemKey, isNumber, isArray):
-        intFinder = re.compile('\d+')
-
+    def FindElementValue(self, itemElement, itemKey, isArray):
         namespaces = {
                 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
 		'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
                 'dc': 'http://purl.org/dc/elements/1.1/'
 	}
 
-        value = itemElement.find(itemKey, namespaces)
+        items = itemElement.findall(itemKey, namespaces)
+
         parsedValue = None
 
-        if value != None:
-            if isNumber:
-                numbers = intFinder.findall(value.text)
-                if (len(numbers) > 0):
-                    parsedValue = numbers[0]
-            else:
-                parsedValue = value.text
+        if len(items) > 0:
+            parsedValue = items[0].text
 
         if isArray:
-            values = []
-            if parsedValue != None:
-                values.append(parsedValue)
-            return values
+            values = set()
+            if len(items) > 0:
+                for i in items:
+                    value = i.text
+                    if value != None:
+                        values.add(i.text)
+            return list(values)
         else:
             return parsedValue
