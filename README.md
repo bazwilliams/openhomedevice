@@ -82,7 +82,7 @@ Device(location)
   "disc": None,
   "composer": [],
   "year": 2017,
-  "duration": 0,
+  "duration": 460,
   "author": [],
   "albumArtist": [],
   "type": "object.item.audioItem.musicTrack",
