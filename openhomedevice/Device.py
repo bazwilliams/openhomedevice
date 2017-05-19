@@ -16,6 +16,10 @@ class Device(object):
     def Uuid(self):
         return self.rootDevice.Device().Uuid()
 
+    def HasTransportService(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
+        return service is not None
+
     def Name(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
         product = soapRequest(service.ControlUrl(), service.Type(), "Product", "")
@@ -48,47 +52,75 @@ class Device(object):
         return standbyStateXml[0].find("{%s}StandbyResponse/Value" % service.Type()).text == "true"
 
     def TransportState(self):
-        source = self.Source()
-        if source["type"] == "Radio":
-            return self.RadioTransportState()
-        if source["type"] == "Playlist":
-            return self.PlaylistTransportState()
-        return ""
+        if self.HasTransportService():
+            service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
+            transportState = soapRequest(service.ControlUrl(), service.Type(), "TransportState", "")
+
+            transportStateXml = etree.fromstring(transportState)
+            return transportStateXml[0].find("{%s}TransportStateResponse/State" % service.Type()).text
+        else:
+            source = self.Source()
+            if source["type"] == "Radio":
+                return self.RadioTransportState()
+            if source["type"] == "Playlist":
+                return self.PlaylistTransportState()
+            return ""
 
     def Play(self):
-        source = self.Source()
-        if source["type"] == "Radio":
-            return self.PlayRadio()
-        if source["type"] == "Playlist":
-            return self.PlayPlaylist()
+        if self.HasTransportService():
+            self.PlayTransport()
+        else:
+            source = self.Source()
+            if source["type"] == "Radio":
+                return self.PlayRadio()
+            if source["type"] == "Playlist":
+                return self.PlayPlaylist()
 
     def Stop(self):
-        source = self.Source()
-        if source["type"] == "Radio":
-            return self.StopRadio()
-        if source["type"] == "Playlist":
-            return self.StopPlaylist()
+        if self.HasTransportService():
+            self.StopTransport()
+        else:
+            source = self.Source()
+            if source["type"] == "Radio":
+                return self.StopRadio()
+            if source["type"] == "Playlist":
+                return self.StopPlaylist()
 
     def Pause(self):
-        source = self.Source()
-        if source["type"] == "Radio":
-            return self.StopRadio()
-        if source["type"] == "Playlist":
-            return self.PausePlaylist()
+        if self.HasTransportService():
+            self.PauseTransport()
+        else:
+            source = self.Source()
+            if source["type"] == "Radio":
+                return self.StopRadio()
+            if source["type"] == "Playlist":
+                return self.PausePlaylist()
 
     def Skip(self, offset):
-        source = self.Source()
-        if source["type"] == "Playlist":
-            service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
+        if self.HasTransportService():
+            service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
 
             command = None
             if offset > 0:
-                command = "Next"
+                command = "SkipNext"
             else:
-                command = "Previous"
+                command = "SkipPrevious"
 
             for x in range(0, abs(offset)):
                 soapRequest(service.ControlUrl(), service.Type(), command, "")
+        else:
+            source = self.Source()
+            if source["type"] == "Playlist":
+                service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
+
+                command = None
+                if offset > 0:
+                    command = "Next"
+                else:
+                    command = "Previous"
+
+                for x in range(0, abs(offset)):
+                    soapRequest(service.ControlUrl(), service.Type(), command, "")
 
     def RadioTransportState(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
@@ -104,21 +136,33 @@ class Device(object):
         transportStateXml = etree.fromstring(transportState)
         return transportStateXml[0].find("{%s}TransportStateResponse/Value" % service.Type()).text
 
+    def PlayTransport(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
+        soapRequest(service.ControlUrl(), service.Type(), "Play", "")
+
     def PlayRadio(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
         soapRequest(service.ControlUrl(), service.Type(), "Play", "")
-
-    def StopRadio(self):
-        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
-        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
 
     def PlayPlaylist(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
         soapRequest(service.ControlUrl(), service.Type(), "Play", "")
 
+    def PauseTransport(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
+        soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
+
     def PausePlaylist(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
         soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
+
+    def StopTransport(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Transport")
+        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
+
+    def StopRadio(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
+        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
 
     def StopPlaylist(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Playlist")
