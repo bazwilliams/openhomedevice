@@ -7,6 +7,7 @@ from openhomedevice.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
 
+
 class Device(object):
 
     def __init__(self, location):
@@ -47,7 +48,7 @@ class Device(object):
     def IsInStandby(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
         standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
-        
+
         standbyStateXml = etree.fromstring(standbyState)
         return standbyStateXml[0].find("{%s}StandbyResponse/Value" % service.Type()).text == "true"
 
@@ -180,7 +181,7 @@ class Device(object):
 
         sourceName = sourceInfoXml[0].find("{%s}SourceResponse/Name" % service.Type()).text
         sourceType = sourceInfoXml[0].find("{%s}SourceResponse/Type" % service.Type()).text
-        
+
         return {
             "type": sourceType,
             "name": sourceName
@@ -188,7 +189,7 @@ class Device(object):
 
     def VolumeEnabled(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
-        return service != None
+        return service is not None
 
     def VolumeLevel(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
@@ -266,5 +267,5 @@ class Device(object):
         trackInfoString = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
 
         trackInfoParser = TrackInfoParser(trackInfoString)
-        
+
         return trackInfoParser.TrackInfo()
