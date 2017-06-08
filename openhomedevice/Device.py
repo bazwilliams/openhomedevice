@@ -49,7 +49,6 @@ class Device(object):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Product")
         standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
 
-        print(standbyState)
         standbyStateXml = etree.fromstring(standbyState)
         return standbyStateXml[0].find("{%s}StandbyResponse/Value" % service.Type()).text == "1"
 
