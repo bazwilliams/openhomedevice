@@ -269,3 +269,26 @@ class Device(object):
         trackInfoParser = TrackInfoParser(trackInfoString)
 
         return trackInfoParser.TrackInfo()
+
+    def GetConfigurationKeys(self):
+        import json
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Config")
+        keys = soapRequest(service.ControlUrl(), service.Type(), "GetKeys", "")
+
+        keysXml = etree.fromstring(keys)
+        keysArray = keysXml[0].find("{%s}GetKeysResponse/KeyList" % service.Type()).text
+
+        return json.loads(keysArray)
+
+    def GetConfiguration(self, key):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Config")
+        keyString = ("<Key>%s</Key>" % key)
+        configurationValue = soapRequest(service.ControlUrl(), service.Type(), "GetValue", keyString)
+
+        configurationValueXml = etree.fromstring(configurationValue)
+        return configurationValueXml[0].find("{%s}GetValueResponse/Value" % service.Type()).text
+
+    def SetConfiguration(self, key, value):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Config")
+        configValue = ("<Key>%s</Key><Value>%s</Value>" % (key, value))
+        soapRequest(service.ControlUrl(), service.Type(), "SetValue", configValue)
