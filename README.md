@@ -19,7 +19,6 @@ Device(location)
 #### Control
 
 ```python
-
     SetStandby(standbyRequested) #bool
     Play() #starts playback
     Stop() #stops playback
@@ -30,6 +29,14 @@ Device(location)
     DecreaseVolume() #decrease volume by 1
     SetMute(muteRequested) #bool
     SetSource(index) #positive integer (use Sources() for indices)
+```
+
+#### Configuration
+
+```python
+    GetConfigurationKeys() # returns an array of configurable keys
+    SetConfiguration(key, value) #set a configuration key to a specific value
+    GetConfiguration(key) #returns the value of the configuration key 
 ```
 
 #### Informational
