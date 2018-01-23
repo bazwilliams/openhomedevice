@@ -21,7 +21,7 @@ Device(location)
 ```python
     SetStandby(standbyRequested) #bool
     Play() #starts playback
-    Play(track_details) #start playing `track_details`
+    PlayMedia(track_details) #start playing `track_details`
     Stop() #stops playback
     Pause() #pauses playback
     Skip(offset) #positive or negative integer
@@ -131,7 +131,7 @@ Use this to play a short audio track, a podcast Uri or radio station Uri. The au
     trackDetails["title"] = 'Linn Radio (Eclectic Music)'
     trackDetails["albumArtwork"] = 'http://cdn-radiotime-logos.tunein.com/s122119q.png'
 
-    openhomeDevice.Play(trackDetails)
+    openhomeDevice.PlayMedia(trackDetails)
 ```
 
 ## Example

@@ -76,7 +76,7 @@ class Device(object):
             if source["type"] == "Playlist":
                 return self.PlayPlaylist()
 
-    def Play(self, track_details):
+    def PlayMedia(self, track_details):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
 
         didl_lite = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">' \
