@@ -21,6 +21,7 @@ Device(location)
 ```python
     SetStandby(standbyRequested) #bool
     Play() #starts playback
+    Play(track_details) #start playing `track_details`
     Stop() #stops playback
     Pause() #pauses playback
     Skip(offset) #positive or negative integer
@@ -118,6 +119,19 @@ Device(location)
   "title": "Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba) : Violin Sonata No. 2 in A Minor, BWV 1003 (Arr. for Viola da gamba): II. Fuga",
   "sampleRate": 44100
 }
+```
+
+##### Playing A Track
+
+Use this to play a short audio track, a podcast Uri or radio station Uri. The audio will be played using the radio source of the device. The `trackDetails` object should be the same as the one described in the `TrackInfo` section above. 
+
+```python
+    trackDetails = {}
+    trackDetails["uri"] = "http://opml.radiotime.com/Tune.ashx?id=s122119"
+    trackDetails["title"] = 'Linn Radio (Eclectic Music)'
+    trackDetails["albumArtwork"] = 'http://cdn-radiotime-logos.tunein.com/s122119q.png'
+
+    openhomeDevice.Play(trackDetails)
 ```
 
 ## Example

@@ -92,9 +92,9 @@ class TrackInfoParser(object):
     def FindElementAttributeValue(self, itemElement, itemKey, itemAttribute):
         namespaces = {
                 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
-		'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
+                'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
                 'dc': 'http://purl.org/dc/elements/1.1/'
-	}
+        }
 
         value = itemElement.find(itemKey, namespaces)
         parsedValue = None
@@ -109,9 +109,9 @@ class TrackInfoParser(object):
     def FindElementValue(self, itemElement, itemKey, isArray):
         namespaces = {
                 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/',
-		'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
+                'upnp': 'urn:schemas-upnp-org:metadata-1-0/upnp/',
                 'dc': 'http://purl.org/dc/elements/1.1/'
-	}
+        }
 
         items = itemElement.findall(itemKey, namespaces)
 

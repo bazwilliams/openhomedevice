@@ -7,7 +7,6 @@ from openhomedevice.Soap import soapRequest
 
 import xml.etree.ElementTree as etree
 
-
 class Device(object):
 
     def __init__(self, location):
@@ -76,6 +75,23 @@ class Device(object):
                 return self.PlayRadio()
             if source["type"] == "Playlist":
                 return self.PlayPlaylist()
+
+    def Play(self, track_details):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
+
+        didl_lite = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">' \
+                    '<item id="" parentID="" restricted="True">' \
+                    '<dc:title>' + track_details['title'] + '</dc:title>' \
+                    '<res protocolInfo="*:*:*:*">' + track_details['uri'] + '</res>' \
+                    '<upnp:albumArtURI>' + track_details['albumArtwork'] + '</upnp:albumArtURI>' \
+                    '<upnp:class>object.item.audioItem</upnp:class>' \
+                    '</item>' \
+                    '</DIDL-Lite>'
+
+        channelValue = ("<Uri>%s</Uri><Metadata>%s</Metadata>" % (track_details["uri"], didl_lite))
+        soapRequest(service.ControlUrl(), service.Type(), "SetChannel", channelValue)
+
+        self.PlayRadio()
 
     def Stop(self):
         if self.HasTransportService():
@@ -292,3 +308,7 @@ class Device(object):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Config")
         configValue = ("<Key>%s</Key><Value>%s</Value>" % (key, value))
         soapRequest(service.ControlUrl(), service.Type(), "SetValue", configValue)
+
+    def GetLog(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Debug")
+        return soapRequest(service.ControlUrl(), service.Type(), "GetLog", "").decode('utf-8').split("\n")
