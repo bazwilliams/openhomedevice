@@ -8,7 +8,7 @@ Library to provide an API to an existing openhome device. The device needs to ha
 
 ## API
 
-### Constuctor
+### Constructor
 
 ```python
 Device(location)
