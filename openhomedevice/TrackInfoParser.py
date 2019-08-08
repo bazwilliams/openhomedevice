@@ -1,4 +1,3 @@
-import requests
 import re
 
 import xml.etree.ElementTree as etree

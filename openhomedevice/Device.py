@@ -4,7 +4,7 @@ import re
 from openhomedevice.RootDevice import RootDevice
 from openhomedevice.TrackInfoParser import TrackInfoParser
 from openhomedevice.Soap import soapRequest
-
+from openhomedevice.DidlLite import didlLiteString
 import xml.etree.ElementTree as etree
 
 class Device(object):
@@ -78,19 +78,9 @@ class Device(object):
 
     def PlayMedia(self, track_details):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
-
-        didl_lite = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">' \
-                    '<item id="" parentID="" restricted="True">' \
-                    '<dc:title>' + track_details['title'] + '</dc:title>' \
-                    '<res protocolInfo="*:*:*:*">' + track_details['uri'] + '</res>' \
-                    '<upnp:albumArtURI>' + track_details['albumArtwork'] + '</upnp:albumArtURI>' \
-                    '<upnp:class>object.item.audioItem</upnp:class>' \
-                    '</item>' \
-                    '</DIDL-Lite>'
-
-        channelValue = ("<Uri>%s</Uri><Metadata>%s</Metadata>" % (track_details["uri"], didl_lite))
-        soapRequest(service.ControlUrl(), service.Type(), "SetChannel", channelValue)
-
+        uri = track_details.get('uri', '')
+        channelValueString = "<Uri>{0}</Uri><Metadata>{1}</Metadata>".format(uri, didlLiteString(track_details))
+        soapRequest(service.ControlUrl(), service.Type(), "SetChannel", channelValueString)
         self.PlayRadio()
 
     def Stop(self):
