@@ -65,7 +65,7 @@ class TrackInfoParser(object):
         if value == None:
             return None
 
-        intFinder = re.compile('\d+')
+        intFinder = re.compile(r'\d+')
         numbers = intFinder.findall(value.split('.')[0])
 
         if (len(numbers) == 3):
@@ -81,7 +81,7 @@ class TrackInfoParser(object):
         if value == None:
             return None
 
-        intFinder = re.compile('\d+')
+        intFinder = re.compile(r'\d+')
         numbers = intFinder.findall(value)
         if (len(numbers) > 0):
             return int(numbers[0])
