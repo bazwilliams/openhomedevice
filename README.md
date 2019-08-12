@@ -162,3 +162,9 @@ if __name__ == '__main__':
         print("SOURCES  : %s" % openhomeDevice.Sources())
     print("----")
 ```
+
+## Running Tests
+
+```bash
+PYTHONPATH=. pytest ./tests/*
+```
