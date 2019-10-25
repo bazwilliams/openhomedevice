@@ -72,14 +72,14 @@ class Device:
         # serviceList
         serviceList = aDevElem.find( '{%s}serviceList' % (aDevNs) )
         if serviceList is not None:
-            for service in serviceList.getchildren():
+            for service in serviceList:
                 newServ = Service.Service( self, service, aDevNs )
                 self.iServiceList.append( newServ )
         
         # deviceList
         deviceList = aDevElem.find( '{%s}deviceList' % (aDevNs) )
         if deviceList:
-            for device in deviceList.getchildren():
+            for device in deviceList:
                 newDev = Device( device, aDevNs, aRootDevice )
                 self.iDeviceList.append( newDev )
         
