@@ -7,6 +7,7 @@ from openhomedevice.Soap import soapRequest
 from openhomedevice.DidlLite import didlLiteString
 import xml.etree.ElementTree as etree
 
+
 class Device(object):
 
     def __init__(self, location):
@@ -78,10 +79,11 @@ class Device(object):
 
     def PlayMedia(self, track_details):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Radio")
-        uri = track_details.get('uri', '')
-        channelValueString = "<Uri>{0}</Uri><Metadata>{1}</Metadata>".format(uri, didlLiteString(track_details))
-        soapRequest(service.ControlUrl(), service.Type(), "SetChannel", channelValueString)
-        self.PlayRadio()
+        if (track_details):
+            uri = track_details.get('uri', '')
+            channelValueString = "<Uri>{0}</Uri><Metadata>{1}</Metadata>".format(uri, didlLiteString(track_details))
+            soapRequest(service.ControlUrl(), service.Type(), "SetChannel", channelValueString)
+            self.PlayRadio()
 
     def Stop(self):
         if self.HasTransportService():
