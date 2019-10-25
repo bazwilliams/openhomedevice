@@ -1,14 +1,25 @@
-from distutils.core import setup
-setup(
+import setuptools
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
   name = 'openhomedevice',
-  packages = ['openhomedevice'],
-  version = '0.6.1',
-  description = 'Provides an API for requesting information from an Openhome device',
+  version = '0.6.2',
   author = 'Barry John Williams',
   author_email = 'barry@bjw.me.uk',
-  url = 'https://github.com/bazwilliams/openhomedevice',
+  description='Provides an API for requesting information from an Openhome device',
+  long_description=long_description,
+  long_description_content_type="text/markdown",
+  url='https://github.com/bazwilliams/openhomedevice',
+  packages=setuptools.find_packages(),
   download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/0.4.3',
   keywords = ['upnp', 'dlna', 'openhome', 'linn', 'ds', 'music', 'render'],
   install_requires = ['requests', 'lxml'],
-  classifiers = [],
+      classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.6'
 )

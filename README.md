@@ -37,7 +37,7 @@ Device(location)
 ```python
     GetConfigurationKeys() # returns an array of configurable keys
     SetConfiguration(key, value) #set a configuration key to a specific value
-    GetConfiguration(key) #returns the value of the configuration key 
+    GetConfiguration(key) #returns the value of the configuration key
 ```
 
 #### Informational
@@ -69,9 +69,9 @@ Device(location)
 
 ```python
 [
-    { 'index': 0, 'type': 'Playlist', 'name': 'Playlist' }, 
-    { 'index': 1, 'type': 'Radio', 'name': 'Radio' }, 
-    { 'index': 3, 'type': 'Receiver', 'name': 'Songcast' }, 
+    { 'index': 0, 'type': 'Playlist', 'name': 'Playlist' },
+    { 'index': 1, 'type': 'Radio', 'name': 'Radio' },
+    { 'index': 3, 'type': 'Receiver', 'name': 'Songcast' },
     { 'index': 6, 'type': 'Analog', 'name': 'Front Aux' }
 ]
 ```
@@ -123,7 +123,7 @@ Device(location)
 
 ##### Playing A Track
 
-Use this to play a short audio track, a podcast Uri or radio station Uri. The audio will be played using the radio source of the device. The `trackDetails` object should be the same as the one described in the `TrackInfo` section above. 
+Use this to play a short audio track, a podcast Uri or radio station Uri. The audio will be played using the radio source of the device. The `trackDetails` object should be the same as the one described in the `TrackInfo` section above.
 
 ```python
     trackDetails = {}
@@ -167,4 +167,15 @@ if __name__ == '__main__':
 
 ```bash
 PYTHONPATH=. pytest ./tests/*
+```
+
+## Uploading Package
+
+Following guide from https://packaging.python.org/tutorials/packaging-projects/
+
+Update version in `setup.py`
+
+```sh
+python3 setup.py sdist
+twine upload dist/*
 ```
