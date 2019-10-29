@@ -223,19 +223,35 @@ class Device(object):
 
     def SetVolumeLevel(self, volumeLevel):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+    
+        if service is None:
+            return None
+
         valueString = ("<Value>%s</Value>" % int(volumeLevel))
         soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
 
     def IncreaseVolume(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+            
+        if service is None:
+            return None
+        
         soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
 
     def DecreaseVolume(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+            
+        if service is None:
+            return None
+
         soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
 
     def SetMute(self, muteRequested):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Volume")
+            
+        if service is None:
+            return None
+
         valueString = None
         if muteRequested:
             valueString = "<Value>1</Value>"
