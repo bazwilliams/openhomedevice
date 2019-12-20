@@ -5,18 +5,24 @@ import xml.etree.ElementTree as etree
 class TrackInfoParser(object):
 
     def __init__(self, trackInfo):
-        trackInfoXml = etree.fromstring(trackInfo)
-        self.metadata = trackInfoXml[0][0].find("Metadata").text
+        try:
+            trackInfoXml = etree.fromstring(trackInfo)
+            self.metadata = trackInfoXml[0][0].find("Metadata").text
+        except:
+            self.metadata = None
 
     def TrackInfo(self):
 
-        if self.metadata is None:
-            return {}
-
-        metadataXml = etree.fromstring(self.metadata)
-        itemElement = metadataXml.find("DIDL-Lite:item", { 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/' })
-
         trackDetails = {}
+
+        if self.metadata is None:
+            return trackDetails
+
+        try:
+            metadataXml = etree.fromstring(self.metadata)
+            itemElement = metadataXml.find("DIDL-Lite:item", { 'DIDL-Lite': 'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/' })
+        except:
+            return trackDetails
 
         trackDetails["type"] = self.FindElementValue(itemElement, "upnp:class", False)
         trackDetails["title"] = self.FindElementValue(itemElement, "dc:title", False)
