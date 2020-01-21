@@ -1,5 +1,6 @@
 import requests
 import re
+import json
 
 from openhomedevice.RootDevice import RootDevice
 from openhomedevice.TrackInfoParser import TrackInfoParser
@@ -320,3 +321,36 @@ class Device(object):
     def GetLog(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Debug")
         return soapRequest(service.ControlUrl(), service.Type(), "GetLog", "").decode('utf-8').split("\n")
+
+    def Pins(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        response = soapRequest(service.ControlUrl(), service.Type(), "GetDeviceMax", "")
+        xml = etree.fromstring(response)
+        maxNumberOfPins = int(xml[0].find("{%s}GetDeviceMaxResponse/DeviceMax" % service.Type()).text)
+        pinIdArray = self._GetPinIdArray()
+        pinMetadata = self._PinMetadata(pinIdArray)
+        pins = list()
+        for i in range(maxNumberOfPins):
+            if pinMetadata[i].get('id') > 0:
+                pin = { 'index': i+1, 'title': pinMetadata[i].get('title') }
+                pins.append(pin)
+        return pins
+
+    def _GetPinIdArray(self):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        idArrayResponse = soapRequest(service.ControlUrl(), service.Type(), "GetIdArray", "")
+        idArrayResponseXml = etree.fromstring(idArrayResponse)
+        return json.loads(idArrayResponseXml[0].find("{%s}GetIdArrayResponse/IdArray" % service.Type()).text)
+
+    def InvokePin(self, pinId):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        indexValue = ("<Index>%s</Index>" % (pinId - 1))
+        soapRequest(service.ControlUrl(), service.Type(), "InvokeIndex", indexValue)
+
+    def _PinMetadata(self, ids):
+        service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        idsValue = ("<Ids>%s</Ids>" % json.dumps(ids))
+        response = soapRequest(service.ControlUrl(), service.Type(), "ReadList", idsValue)
+        responseXml = etree.fromstring(response)
+        return json.loads(responseXml[0].find("{%s}ReadListResponse/List" % service.Type()).text)
+        

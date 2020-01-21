@@ -26,7 +26,17 @@ def mocked_soap_request(*args, **kwargs):
     if (args[2] == "Standby"):
         with open(os.path.join(os.path.dirname(__file__), 'data/productStandbySoapResponse.xml')) as file:
             return file.read()
-
+    if (args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "GetDeviceMax"):
+        with open(os.path.join(os.path.dirname(__file__), 'data/pinsDeviceMaxSoapResponse.xml')) as file:
+            return file.read()
+    if (args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "GetIdArray"):
+        with open(os.path.join(os.path.dirname(__file__), 'data/pinsGetIdArraySoapResponse.xml')) as file:
+            return file.read()
+    if (args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "ReadList"):
+        with open(os.path.join(os.path.dirname(__file__), 'data/pinsReadListSoapResponse.xml')) as file:
+            return file.read()
+    print(args)
+    
 class DidlLiteTests(unittest.TestCase):
 
     LOCATION = "http://mydevice:12345/desc.xml"
@@ -88,3 +98,20 @@ class DidlLiteTests(unittest.TestCase):
         expectedValue = "<Uri></Uri><Metadata>{0}</Metadata>".format(didlLiteString(track_details))
         self.sut.PlayMedia(track_details)
         self.assertEqual(soap_request_calls[0][3], expectedValue)
+
+    def test_number_of_pins(self):
+        self.assertListEqual(
+            self.sut.Pins(),
+            [
+                {'index': 1, 'title': 'Sky'},
+                {'index': 2, 'title': 'Playstation 4'},
+                {'index': 4, 'title': 'Fire Stick'},
+                {'index': 6, 'title': 'LP12'}
+            ]
+        )
+
+    def test_invoke_pin(self):
+        self.sut.InvokePin(42)
+        self.assertEqual(soap_request_calls[0][1], "urn:av-openhome-org:service:Pins:1")
+        self.assertEqual(soap_request_calls[0][2], "InvokeIndex")
+        self.assertEqual(soap_request_calls[0][3], "<Index>41</Index>")

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<s:Envelope 
+    xmlns:s="http://www.w3.org/2003/05/soap-envelope/"
+    s:encodingStyle="http://www.w3.org/2003/05/soap-encoding">
+    <s:Body xmlns:m="urn:av-openhome-org:service:Product:3">
+        <u:GetDeviceMaxResponse xmlns:u="urn:av-openhome-org:service:Pins:1">
+            <DeviceMax>6</DeviceMax>
+        </u:GetDeviceMaxResponse>
+    </s:Body>
+</s:Envelope>

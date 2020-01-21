@@ -30,6 +30,7 @@ Device(location)
     DecreaseVolume() #decrease volume by 1
     SetMute(muteRequested) #bool
     SetSource(index) #positive integer (use Sources() for indices)
+    InvokePin(index) #positive integer (use Pins() for indices)
 ```
 
 #### Configuration
@@ -54,6 +55,7 @@ Device(location)
     Source() #returns the currently connected source as a dictionary
     Sources() #returns an array of source dictionaries with indices
     TrackInfo() #returns a track dictionary
+    Pins() #returns an array of pin dictionaries with indices
 ```
 
 ##### Source Response
@@ -73,6 +75,16 @@ Device(location)
     { 'index': 1, 'type': 'Radio', 'name': 'Radio' },
     { 'index': 3, 'type': 'Receiver', 'name': 'Songcast' },
     { 'index': 6, 'type': 'Analog', 'name': 'Front Aux' }
+]
+```
+
+##### Pins Response
+
+```python
+[
+  {'index': 1, 'title': 'Playstation 4'}
+  {'index': 4, 'title': 'Classic FM'}
+  {'index': 6, 'title': 'Chillout Playlist'}
 ]
 ```
 
