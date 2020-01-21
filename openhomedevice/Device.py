@@ -444,7 +444,10 @@ class Device(object):
         )
 
     def Pins(self):
+        pins = list()
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        if service is None:
+            return pins
         response = soapRequest(service.ControlUrl(), service.Type(), "GetDeviceMax", "")
         xml = etree.fromstring(response)
         maxNumberOfPins = int(
@@ -452,7 +455,6 @@ class Device(object):
         )
         pinIdArray = self._GetPinIdArray()
         pinMetadata = self._PinMetadata(pinIdArray)
-        pins = list()
         for i in range(maxNumberOfPins):
             if pinMetadata[i].get("id") > 0:
                 pin = {"index": i + 1, "title": pinMetadata[i].get("title")}
@@ -473,6 +475,9 @@ class Device(object):
 
     def InvokePin(self, pinId):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
+        if service is None:
+            return None
+
         indexValue = "<Index>%s</Index>" % (pinId - 1)
         soapRequest(service.ControlUrl(), service.Type(), "InvokeIndex", indexValue)
 
