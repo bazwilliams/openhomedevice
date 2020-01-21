@@ -172,6 +172,7 @@ if __name__ == '__main__':
         print("VOLUME   : %s" % openhomeDevice.VolumeLevel())
         print("MUTED    : %s" % openhomeDevice.IsMuted())
         print("SOURCES  : %s" % openhomeDevice.Sources())
+        print("PINS     : %s" % openhomeDevice.Pins())
     print("----")
 ```
 
