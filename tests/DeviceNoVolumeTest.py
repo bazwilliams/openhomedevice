@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 import os
 
+
 def mocked_requests_get(*args, **kwargs):
     class MockResponse:
         def __init__(self, payload, status_code):
@@ -12,16 +13,20 @@ def mocked_requests_get(*args, **kwargs):
         def text(self):
             return self.payload
 
-    with open(os.path.join(os.path.dirname(__file__), 'data/novolumedevice.xml')) as file:
+    with open(
+        os.path.join(os.path.dirname(__file__), "data/novolumedevice.xml")
+    ) as file:
         return MockResponse(file.read(), 200)
+
 
 class DeviceWithNoVolumeTests(unittest.TestCase):
 
     LOCATION = "http://mydevice:12345/desc.xml"
 
-    @patch('requests.get', side_effect=mocked_requests_get)
+    @patch("requests.get", side_effect=mocked_requests_get)
     def setUp(self, patched_get):
         from openhomedevice.Device import Device
+
         self.sut = Device(self.LOCATION)
         soap_request_calls = []
         return super().setUp()
