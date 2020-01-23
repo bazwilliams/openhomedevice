@@ -130,10 +130,10 @@ class DidlLiteTests(unittest.TestCase):
         self.assertListEqual(
             self.sut.Pins(),
             [
-                {"index": 1, "title": "Sky"},
-                {"index": 2, "title": "Playstation 4"},
-                {"index": 4, "title": "Fire Stick"},
-                {"index": 6, "title": "LP12"},
+                {"index": 1, "title": "Sky", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI2'},
+                {"index": 2, "title": "Playstation 4", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI1'},
+                {"index": 4, "title": "Fire Stick", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI3'},
+                {"index": 6, "title": "LP12", 'artworkUri': 'external:///source?type=Analog&systemName=Balanced'},
             ],
         )
 

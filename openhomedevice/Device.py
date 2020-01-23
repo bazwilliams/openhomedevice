@@ -457,7 +457,7 @@ class Device(object):
         pinMetadata = self._PinMetadata(pinIdArray)
         for i in range(maxNumberOfPins):
             if pinMetadata[i].get("id") > 0:
-                pin = {"index": i + 1, "title": pinMetadata[i].get("title")}
+                pin = {"index": i + 1, "title": pinMetadata[i].get("title"), "artworkUri": pinMetadata[i].get("artworkUri")}
                 pins.append(pin)
         return pins
 

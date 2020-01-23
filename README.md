@@ -82,9 +82,9 @@ Device(location)
 
 ```python
 [
-  {'index': 1, 'title': 'Playstation 4'}
-  {'index': 4, 'title': 'Classic FM'}
-  {'index': 6, 'title': 'Chillout Playlist'}
+  {'index': 1, 'title': 'Playstation 4', 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI3'}
+  {'index': 4, 'title': 'Classic FM', 'artworkUri': 'http://cdn-profiles.tunein.com/s8439/images/logoq.png?t=1'}
+  {'index': 6, 'title': 'Chillout Playlist', 'artworkUri': 'http://media/artwork/chillout-playlist.png'}
 ]
 ```
 
