@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+    <specVersion>
+        <major>1</major>
+        <minor>0</minor>
+    </specVersion>
+    <device>
+        <deviceType>urn:linn-co-uk:device:Source:1</deviceType>
+        <UDN>uuid:509a3dc9-d32b-30a1-ffff-ffff8842af55</UDN>
+        <friendlyName>VoltaStream-63 (OpenHome)</friendlyName>
+        <manufacturer>Ivo Clarysse, Henner Zeller (Bubblesoft)</manufacturer>
+        <manufacturerURL>http://forum.xda-developers.com/showthread.php?t=1118891</manufacturerURL>
+        <modelDescription>gmediarender 0.0.7-git (OpenHome)</modelDescription>
+        <modelName>gmediarender (OpenHome)</modelName>
+        <modelNumber>0.0.7-git (0.9-update37)</modelNumber>
+        <modelURL>http://github.com/hzeller/gmrender-resurrect</modelURL>
+        <iconList>
+            <icon>
+                <mimetype>image/png</mimetype>
+                <width>64</width>
+                <height>64</height>
+                <depth>24</depth>
+                <url>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/upnp/grender-64x64.png</url>
+            </icon>
+            <icon>
+                <mimetype>image/png</mimetype>
+                <width>128</width>
+                <height>128</height>
+                <depth>24</depth>
+                <url>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/upnp/grender-128x128.png</url>
+            </icon>
+        </iconList>
+        <serviceList>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Product:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Product</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/desc.xml</SCPDURL>
+            </service>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Volume:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Volume</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/desc.xml</SCPDURL>
+            </service>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Time:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Time</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/desc.xml</SCPDURL>
+            </service>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Info:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Info</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/desc.xml</SCPDURL>
+            </service>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Playlist:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Playlist</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/desc.xml</SCPDURL>
+            </service>
+            <service>
+                <serviceType>urn:av-openhome-org:service:Credentials:1</serviceType>
+                <serviceId>urn:av-openhome-org:serviceId:Credentials</serviceId>
+                <controlURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/action</controlURL>
+                <eventSubURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/event</eventSubURL>
+                <SCPDURL>/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/desc.xml</SCPDURL>
+            </service>
+        </serviceList>
+    </device>
+</root>

@@ -13,7 +13,7 @@ def mocked_requests_get(*args, **kwargs):
         def text(self):
             return self.payload
 
-    with open(os.path.join(os.path.dirname(__file__), "data/description.xml")) as file:
+    with open(os.path.join(os.path.dirname(__file__), "data/linndescription.xml")) as file:
         return MockResponse(file.read(), 200)
 
 
