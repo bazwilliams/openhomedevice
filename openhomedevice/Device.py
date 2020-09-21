@@ -1,4 +1,4 @@
-import requests
+import http3
 import re
 import json
 
@@ -8,11 +8,17 @@ from openhomedevice.Soap import soapRequest
 from openhomedevice.DidlLite import didlLiteString
 import xml.etree.ElementTree as etree
 
-
-class Device(object):
-    def __init__(self, location):
-        xmlDesc = requests.get(location).text.encode("utf-8")
-        self.rootDevice = RootDevice(xmlDesc, location)
+class Device():
+    @classmethod
+    async def create(cls, location):
+        client = http3.AsyncClient()
+        self = Device()
+        response = await client.get(location)
+        if response.status_code == 200:
+            xmlDesc = response.text.encode("utf-8")
+            self.rootDevice = RootDevice(xmlDesc, location)
+            return self
+        raise Exception('Device Not Found')
 
     def Uuid(self):
         return self.rootDevice.Device().Uuid()
@@ -23,11 +29,11 @@ class Device(object):
         )
         return service is not None
 
-    def Name(self):
+    async def Name(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
-        product = soapRequest(service.ControlUrl(), service.Type(), "Product", "")
+        product = await soapRequest(service.ControlUrl(), service.Type(), "Product", "")
 
         productXml = etree.fromstring(product)
         return (
@@ -36,11 +42,11 @@ class Device(object):
             .text.encode("utf-8")
         )
 
-    def Room(self):
+    async def Room(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
-        product = soapRequest(service.ControlUrl(), service.Type(), "Product", "")
+        product = await soapRequest(service.ControlUrl(), service.Type(), "Product", "")
 
         productXml = etree.fromstring(product)
         return (
@@ -49,7 +55,7 @@ class Device(object):
             .text.encode("utf-8")
         )
 
-    def SetStandby(self, standbyRequested):
+    async def SetStandby(self, standbyRequested):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
@@ -59,13 +65,13 @@ class Device(object):
             valueString = "<Value>1</Value>"
         else:
             valueString = "<Value>0</Value>"
-        soapRequest(service.ControlUrl(), service.Type(), "SetStandby", valueString)
+        await soapRequest(service.ControlUrl(), service.Type(), "SetStandby", valueString)
 
-    def IsInStandby(self):
+    async def IsInStandby(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
-        standbyState = soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
+        standbyState = await soapRequest(service.ControlUrl(), service.Type(), "Standby", "")
 
         standbyStateXml = etree.fromstring(standbyState)
         return (
@@ -73,12 +79,12 @@ class Device(object):
             == "1"
         )
 
-    def TransportState(self):
+    async def TransportState(self):
         if self.HasTransportService():
             service = self.rootDevice.Device().Service(
                 "urn:av-openhome-org:serviceId:Transport"
             )
-            transportState = soapRequest(
+            transportState = await soapRequest(
                 service.ControlUrl(), service.Type(), "TransportState", ""
             )
 
@@ -89,25 +95,25 @@ class Device(object):
                 .text
             )
         else:
-            source = self.Source()
+            source = await self.Source()
             if source["type"] == "Radio":
-                return self.RadioTransportState()
+                return await self.RadioTransportState()
             if source["type"] == "Playlist":
-                return self.PlaylistTransportState()
+                return await self.PlaylistTransportState()
             return ""
 
-    def Play(self):
+    async def Play(self):
         if self.HasTransportService():
-            self.PlayTransport()
+            await self.PlayTransport()
         else:
-            source = self.Source()
-            if source["type"] == "Radio":
-                return self.PlayRadio()
-            if source["type"] == "Playlist":
-                return self.PlayPlaylist()
+            source = await self.Source()
+            if await source["type"] == "Radio":
+                return await self.PlayRadio()
+            if await source["type"] == "Playlist":
+                return await self.PlayPlaylist()
 
-    def PlayMedia(self, track_details):
-        service = self.rootDevice.Device().Service(
+    async def PlayMedia(self, track_details):
+        service = await self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Radio"
         )
         if track_details:
@@ -115,32 +121,32 @@ class Device(object):
             channelValueString = "<Uri>{0}</Uri><Metadata>{1}</Metadata>".format(
                 uri, didlLiteString(track_details)
             )
-            soapRequest(
+            await soapRequest(
                 service.ControlUrl(), service.Type(), "SetChannel", channelValueString
             )
-            self.PlayRadio()
+            await self.PlayRadio()
 
-    def Stop(self):
+    async def Stop(self):
         if self.HasTransportService():
-            self.StopTransport()
+            await self.StopTransport()
         else:
-            source = self.Source()
+            source = await self.Source()
             if source["type"] == "Radio":
-                return self.StopRadio()
+                return await self.StopRadio()
             if source["type"] == "Playlist":
-                return self.StopPlaylist()
+                return await self.StopPlaylist()
 
-    def Pause(self):
+    async def Pause(self):
         if self.HasTransportService():
-            self.PauseTransport()
+            await self.PauseTransport()
         else:
-            source = self.Source()
+            source = await self.Source()
             if source["type"] == "Radio":
-                return self.StopRadio()
+                return await self.StopRadio()
             if source["type"] == "Playlist":
-                return self.PausePlaylist()
+                return await self.PausePlaylist()
 
-    def Skip(self, offset):
+    async def Skip(self, offset):
         if self.HasTransportService():
             service = self.rootDevice.Device().Service(
                 "urn:av-openhome-org:serviceId:Transport"
@@ -153,9 +159,9 @@ class Device(object):
                 command = "SkipPrevious"
 
             for x in range(0, abs(offset)):
-                soapRequest(service.ControlUrl(), service.Type(), command, "")
+                await soapRequest(service.ControlUrl(), service.Type(), command, "")
         else:
-            source = self.Source()
+            source = await self.Source()
             if source["type"] == "Playlist":
                 service = self.rootDevice.Device().Service(
                     "urn:av-openhome-org:serviceId:Playlist"
@@ -168,13 +174,13 @@ class Device(object):
                     command = "Previous"
 
                 for x in range(0, abs(offset)):
-                    soapRequest(service.ControlUrl(), service.Type(), command, "")
+                    await soapRequest(service.ControlUrl(), service.Type(), command, "")
 
-    def RadioTransportState(self):
+    async def RadioTransportState(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Radio"
         )
-        transportState = soapRequest(
+        transportState = await soapRequest(
             service.ControlUrl(), service.Type(), "TransportState", ""
         )
 
@@ -185,11 +191,11 @@ class Device(object):
             .text
         )
 
-    def PlaylistTransportState(self):
+    async def PlaylistTransportState(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Playlist"
         )
-        transportState = soapRequest(
+        transportState = await soapRequest(
             service.ControlUrl(), service.Type(), "TransportState", ""
         )
 
@@ -200,66 +206,66 @@ class Device(object):
             .text
         )
 
-    def PlayTransport(self):
+    async def PlayTransport(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Transport"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Play", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Play", "")
 
-    def PlayRadio(self):
+    async def PlayRadio(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Radio"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Play", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Play", "")
 
-    def PlayPlaylist(self):
+    async def PlayPlaylist(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Playlist"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Play", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Play", "")
 
-    def PauseTransport(self):
+    async def PauseTransport(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Transport"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
 
-    def PausePlaylist(self):
+    async def PausePlaylist(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Playlist"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Pause", "")
 
-    def StopTransport(self):
+    async def StopTransport(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Transport"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
 
-    def StopRadio(self):
+    async def StopRadio(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Radio"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
 
-    def StopPlaylist(self):
+    async def StopPlaylist(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Playlist"
         )
-        soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "Stop", "")
 
-    def Source(self):
+    async def Source(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
-        source = soapRequest(service.ControlUrl(), service.Type(), "SourceIndex", "")
+        source = await soapRequest(service.ControlUrl(), service.Type(), "SourceIndex", "")
 
         sourceXml = etree.fromstring(source)
         sourceIndex = (
             sourceXml[0].find("{%s}SourceIndexResponse/Value" % service.Type()).text
         )
 
-        sourceInfo = soapRequest(
+        sourceInfo = await soapRequest(
             service.ControlUrl(),
             service.Type(),
             "Source",
@@ -276,13 +282,13 @@ class Device(object):
 
         return {"type": sourceType, "name": sourceName}
 
-    def VolumeEnabled(self):
+    async def VolumeEnabled(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
         return service is not None
 
-    def VolumeLevel(self):
+    async def VolumeLevel(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -290,12 +296,12 @@ class Device(object):
         if service is None:
             return None
 
-        volume = soapRequest(service.ControlUrl(), service.Type(), "Volume", "")
+        volume = await soapRequest(service.ControlUrl(), service.Type(), "Volume", "")
 
         volumeXml = etree.fromstring(volume)
         return int(volumeXml[0].find("{%s}VolumeResponse/Value" % service.Type()).text)
 
-    def IsMuted(self):
+    async def IsMuted(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -303,12 +309,12 @@ class Device(object):
         if service is None:
             return None
 
-        mute = soapRequest(service.ControlUrl(), service.Type(), "Mute", "")
+        mute = await soapRequest(service.ControlUrl(), service.Type(), "Mute", "")
 
         muteXml = etree.fromstring(mute)
         return muteXml[0].find("{%s}MuteResponse/Value" % service.Type()).text == "true"
 
-    def SetVolumeLevel(self, volumeLevel):
+    async def SetVolumeLevel(self, volumeLevel):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -317,9 +323,9 @@ class Device(object):
             return None
 
         valueString = "<Value>%s</Value>" % int(volumeLevel)
-        soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
+        await soapRequest(service.ControlUrl(), service.Type(), "SetVolume", valueString)
 
-    def IncreaseVolume(self):
+    async def IncreaseVolume(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -327,9 +333,9 @@ class Device(object):
         if service is None:
             return None
 
-        soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "VolumeInc", "")
 
-    def DecreaseVolume(self):
+    async def DecreaseVolume(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -337,9 +343,9 @@ class Device(object):
         if service is None:
             return None
 
-        soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
+        await soapRequest(service.ControlUrl(), service.Type(), "VolumeDec", "")
 
-    def SetMute(self, muteRequested):
+    async def SetMute(self, muteRequested):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Volume"
         )
@@ -352,20 +358,20 @@ class Device(object):
             valueString = "<Value>1</Value>"
         else:
             valueString = "<Value>0</Value>"
-        soapRequest(service.ControlUrl(), service.Type(), "SetMute", valueString)
+        await soapRequest(service.ControlUrl(), service.Type(), "SetMute", valueString)
 
-    def SetSource(self, index):
+    async def SetSource(self, index):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
         valueString = "<Value>%s</Value>" % int(index)
-        soapRequest(service.ControlUrl(), service.Type(), "SetSourceIndex", valueString)
+        await soapRequest(service.ControlUrl(), service.Type(), "SetSourceIndex", valueString)
 
-    def Sources(self):
+    async def Sources(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Product"
         )
-        sources = soapRequest(service.ControlUrl(), service.Type(), "SourceXml", "")
+        sources = await soapRequest(service.ControlUrl(), service.Type(), "SourceXml", "")
 
         sourcesXml = etree.fromstring(sources)
         sourcesList = (
@@ -389,33 +395,33 @@ class Device(object):
             index = index + 1
         return sources
 
-    def TrackInfo(self):
+    async def TrackInfo(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Info")
-        trackInfoString = soapRequest(service.ControlUrl(), service.Type(), "Track", "")
+        trackInfoString = await soapRequest(service.ControlUrl(), service.Type(), "Track", "")
 
         trackInfoParser = TrackInfoParser(trackInfoString)
 
         return trackInfoParser.TrackInfo()
 
-    def GetConfigurationKeys(self):
+    async def GetConfigurationKeys(self):
         import json
 
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Config"
         )
-        keys = soapRequest(service.ControlUrl(), service.Type(), "GetKeys", "")
+        keys = await soapRequest(service.ControlUrl(), service.Type(), "GetKeys", "")
 
         keysXml = etree.fromstring(keys)
         keysArray = keysXml[0].find("{%s}GetKeysResponse/KeyList" % service.Type()).text
 
         return json.loads(keysArray)
 
-    def GetConfiguration(self, key):
+    async def GetConfiguration(self, key):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Config"
         )
         keyString = "<Key>%s</Key>" % key
-        configurationValue = soapRequest(
+        configurationValue = await soapRequest(
             service.ControlUrl(), service.Type(), "GetValue", keyString
         )
 
@@ -426,44 +432,44 @@ class Device(object):
             .text
         )
 
-    def SetConfiguration(self, key, value):
+    async def SetConfiguration(self, key, value):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Config"
         )
         configValue = "<Key>%s</Key><Value>%s</Value>" % (key, value)
-        soapRequest(service.ControlUrl(), service.Type(), "SetValue", configValue)
+        await soapRequest(service.ControlUrl(), service.Type(), "SetValue", configValue)
 
-    def GetLog(self):
+    async def GetLog(self):
         service = self.rootDevice.Device().Service(
             "urn:av-openhome-org:serviceId:Debug"
         )
         return (
-            soapRequest(service.ControlUrl(), service.Type(), "GetLog", "")
+            await soapRequest(service.ControlUrl(), service.Type(), "GetLog", "")
             .decode("utf-8")
             .split("\n")
         )
 
-    def Pins(self):
+    async def Pins(self):
         pins = list()
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
         if service is None:
             return pins
-        response = soapRequest(service.ControlUrl(), service.Type(), "GetDeviceMax", "")
+        response = await soapRequest(service.ControlUrl(), service.Type(), "GetDeviceMax", "")
         xml = etree.fromstring(response)
         maxNumberOfPins = int(
             xml[0].find("{%s}GetDeviceMaxResponse/DeviceMax" % service.Type()).text
         )
-        pinIdArray = self._GetPinIdArray()
-        pinMetadata = self._PinMetadata(pinIdArray)
+        pinIdArray = await self._GetPinIdArray()
+        pinMetadata = await self._PinMetadata(pinIdArray)
         for i in range(maxNumberOfPins):
             if pinMetadata[i].get("id") > 0:
                 pin = {"index": i + 1, "title": pinMetadata[i].get("title"), "artworkUri": pinMetadata[i].get("artworkUri")}
                 pins.append(pin)
         return pins
 
-    def _GetPinIdArray(self):
+    async def _GetPinIdArray(self):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
-        idArrayResponse = soapRequest(
+        idArrayResponse = await soapRequest(
             service.ControlUrl(), service.Type(), "GetIdArray", ""
         )
         idArrayResponseXml = etree.fromstring(idArrayResponse)
@@ -473,18 +479,18 @@ class Device(object):
             .text
         )
 
-    def InvokePin(self, pinId):
+    async def InvokePin(self, pinId):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
         if service is None:
             return None
 
         indexValue = "<Index>%s</Index>" % (pinId - 1)
-        soapRequest(service.ControlUrl(), service.Type(), "InvokeIndex", indexValue)
+        await soapRequest(service.ControlUrl(), service.Type(), "InvokeIndex", indexValue)
 
-    def _PinMetadata(self, ids):
+    async def _PinMetadata(self, ids):
         service = self.rootDevice.Device().Service("urn:av-openhome-org:serviceId:Pins")
         idsValue = "<Ids>%s</Ids>" % json.dumps(ids)
-        response = soapRequest(
+        response = await soapRequest(
             service.ControlUrl(), service.Type(), "ReadList", idsValue
         )
         responseXml = etree.fromstring(response)

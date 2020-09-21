@@ -160,19 +160,19 @@ if __name__ == '__main__':
     ]
 
     for location in locations:
-        openhomeDevice = Device(location)
+        openhomeDevice = await Device.create(location)
         print("----")
-        print("NAME     : %s" % openhomeDevice.Name())
-        print("ROOM     : %s" % openhomeDevice.Room())
+        print("NAME     : %s" % await openhomeDevice.Name())
+        print("ROOM     : %s" % await openhomeDevice.Room())
         print("UUID     : %s" % openhomeDevice.Uuid())
-        print("SOURCE   : %s" % openhomeDevice.Source())
-        print("STANDBY  : %s" % openhomeDevice.IsInStandby())
-        print("STATE    : %s" % openhomeDevice.TransportState())
-        print("TRACK    : %s" % openhomeDevice.TrackInfo())
-        print("VOLUME   : %s" % openhomeDevice.VolumeLevel())
-        print("MUTED    : %s" % openhomeDevice.IsMuted())
-        print("SOURCES  : %s" % openhomeDevice.Sources())
-        print("PINS     : %s" % openhomeDevice.Pins())
+        print("SOURCE   : %s" % await openhomeDevice.Source())
+        print("STANDBY  : %s" % await openhomeDevice.IsInStandby())
+        print("STATE    : %s" % await openhomeDevice.TransportState())
+        print("TRACK    : %s" % await openhomeDevice.TrackInfo())
+        print("VOLUME   : %s" % await openhomeDevice.VolumeLevel())
+        print("MUTED    : %s" % await openhomeDevice.IsMuted())
+        print("SOURCES  : %s" % await openhomeDevice.Sources())
+        print("PINS     : %s" % await openhomeDevice.Pins())
     print("----")
 ```
 

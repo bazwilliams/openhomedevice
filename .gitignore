@@ -5,3 +5,4 @@ venv
 dist
 MANIFEST
 App.py
+demo.py

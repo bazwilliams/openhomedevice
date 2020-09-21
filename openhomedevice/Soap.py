@@ -1,5 +1,7 @@
-def soapRequest(location, service, fnName, fnParams):
-    import requests
+import http3
+
+async def soapRequest(location, service, fnName, fnParams):
+    client = http3.AsyncClient()
 
     bodyString = '<?xml version="1.0"?>'
     bodyString += '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">'
@@ -18,7 +20,7 @@ def soapRequest(location, service, fnName, fnParams):
         "SOAPAction": '"' + service + "#" + fnName + '"',
     }
 
-    res = requests.post(location, data=bodyString, headers=headers)
+    res = await client.post(location, data=bodyString, headers=headers)
     res.encoding = "utf-8"
 
     return res.text.encode("utf-8")
