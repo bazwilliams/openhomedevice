@@ -2,6 +2,8 @@
 
 Library to provide an API to an existing openhome device. The device needs to have been discovered first by something like netdisco (https://github.com/home-assistant/netdisco).
 
+The underlying UPnP client library used is https://github.com/StevenLooman/async_upnp_client
+
 ## Installation
 
 `pip install openhomedevice`
@@ -11,7 +13,8 @@ Library to provide an API to an existing openhome device. The device needs to ha
 ### Constructor
 
 ```python
-Device(location)
+device = Device(location)
+await device.init()
 ```
 
 ### Methods
@@ -33,29 +36,21 @@ Device(location)
     InvokePin(index) #positive integer (use Pins() for indices)
 ```
 
-#### Configuration
-
-```python
-    GetConfigurationKeys() # returns an array of configurable keys
-    SetConfiguration(key, value) #set a configuration key to a specific value
-    GetConfiguration(key) #returns the value of the configuration key
-```
-
 #### Informational
 
 ```python
-    Uuid() #Unique identifier
-    Name() #Name of device
-    Room() #Name of room
-    IsInStandby() #returns true if in standby
-    TransportState() #returns one of Stopped, Playing, Paused or Buffering.
-    VolumeEnabled() #returns true if the volume service is available
-    VolumeLevel() #returns the volume setting or None if disabled
-    IsMuted() #returns true if muted or None if disabled
-    Source() #returns the currently connected source as a dictionary
-    Sources() #returns an array of source dictionaries with indices
-    TrackInfo() #returns a track dictionary
-    Pins() #returns an array of pin dictionaries with indices
+    await uuid() #Unique identifier
+    await name() #Name of device
+    await room() #Name of room
+    await is_in_standby() #returns true if in standby
+    await transport_state() #returns one of Stopped, Playing, Paused or Buffering.
+    await volume_enabled() #returns true if the volume service is available
+    await volume_level() #returns the volume setting or None if disabled
+    await is_muted() #returns true if muted or None if disabled
+    await source() #returns the currently connected source as a dictionary
+    await sources() #returns an array of source dictionaries with indices
+    await track_info() #returns a track dictionary
+    await pins() #returns an array of pin dictionaries with indices
 ```
 
 ##### Source Response
@@ -149,31 +144,36 @@ Use this to play a short audio track, a podcast Uri or radio station Uri. The au
 ## Example
 
 ```python
+import asyncio
 from openhomedevice.Device import Device
 
-if __name__ == '__main__':
+async def main():
     locations = [
-        "http://192.168.1.122:55178/4c494e4e-0026-0f21-fd5a-01387403013f/Upnp/device.xml",
-        "http://192.168.1.124:55178/4c494e4e-0026-0f21-f15c-01373197013f/Upnp/device.xml",
-        "http://192.168.1.157:55178/4c494e4e-0026-0f21-d74b-01333078013f/Upnp/device.xml",
-        "http://192.168.1.228:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml"
+        "http://192.168.1.12:55178/4c494e4e-0026-0f21-f15c-01373197013f/Upnp/device.xml"
     ]
 
     for location in locations:
         openhomeDevice = Device(location)
+        await openhomeDevice.init()
+        
         print("----")
-        print("NAME     : %s" % openhomeDevice.Name())
-        print("ROOM     : %s" % openhomeDevice.Room())
-        print("UUID     : %s" % openhomeDevice.Uuid())
-        print("SOURCE   : %s" % openhomeDevice.Source())
-        print("STANDBY  : %s" % openhomeDevice.IsInStandby())
-        print("STATE    : %s" % openhomeDevice.TransportState())
-        print("TRACK    : %s" % openhomeDevice.TrackInfo())
-        print("VOLUME   : %s" % openhomeDevice.VolumeLevel())
-        print("MUTED    : %s" % openhomeDevice.IsMuted())
-        print("SOURCES  : %s" % openhomeDevice.Sources())
-        print("PINS     : %s" % openhomeDevice.Pins())
+        print("NAME     : %s" % await openhomeDevice.name())
+        print("ROOM     : %s" % await openhomeDevice.room())
+        print("UUID     : %s" % await openhomeDevice.uuid())
+        print("SOURCE   : %s" % await openhomeDevice.source())
+        print("STANDBY  : %s" % await openhomeDevice.is_in_standby())
+        print("STATE    : %s" % await openhomeDevice.transport_state())
+        print("TRACK    : %s" % await openhomeDevice.track_info())
+        print("HAS VOL  : %s" % await openhomeDevice.volume_enabled())
+        print("VOLUME   : %s" % await openhomeDevice.volume_level())
+        print("MUTED    : %s" % await openhomeDevice.is_muted())
+        print("SOURCES  : %s" % await openhomeDevice.sources())
+        print("PINS     : %s" % await openhomeDevice.pins())
     print("----")
+
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
 ```
 
 ## Running Tests

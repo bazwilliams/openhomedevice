@@ -2,16 +2,15 @@ import re
 
 import xml.etree.ElementTree as etree
 
+def escape( str ):
+    str = str.replace("&", "&amp;")
+    return str
 
 class TrackInfoParser(object):
-    def __init__(self, trackInfo):
-        try:
-            trackInfoXml = etree.fromstring(trackInfo)
-            self.metadata = trackInfoXml[0][0].find("Metadata").text
-        except:
-            self.metadata = None
+    def __init__(self, metadata):
+        self.metadata = escape(metadata)
 
-    def TrackInfo(self):
+    def track_info(self):
 
         trackDetails = {}
 
