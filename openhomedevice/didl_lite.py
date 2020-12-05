@@ -2,9 +2,11 @@ import re
 
 import xml.etree.ElementTree as etree
 
-def escape( str ):
+
+def escape(str):
     str = str.replace("&", "&amp;")
     return str
+
 
 def generate_string(track_details):
     title = track_details.get("title", "") or ""
@@ -23,6 +25,7 @@ def generate_string(track_details):
         "</item>"
         "</DIDL-Lite>".format(title, uri, albumArtwork)
     )
+
 
 def parse(metadata):
     track_details = {}
@@ -58,21 +61,11 @@ def parse(metadata):
         et, "upnp:artist[@role='AlbumArtist']", True
     )
     track_details["genre"] = find_element_value(et, "upnp:genre", True)
-    track_details["albumGenre"] = find_element_value(
-        et, "upnp:genre", True
-    )
-    track_details["albumTitle"] = find_element_value(
-        et, "upnp:album", False
-    )
-    track_details["albumArtwork"] = find_element_value(
-        et, "upnp:albumArtURI", False
-    )
-    track_details["artwork"] = find_element_value(
-        et, "upnp:artworkURI", False
-    )
-    track_details["year"] = parse_int(
-        find_element_value(et, "dc:date", False)
-    )
+    track_details["albumGenre"] = find_element_value(et, "upnp:genre", True)
+    track_details["albumTitle"] = find_element_value(et, "upnp:album", False)
+    track_details["albumArtwork"] = find_element_value(et, "upnp:albumArtURI", False)
+    track_details["artwork"] = find_element_value(et, "upnp:artworkURI", False)
+    track_details["year"] = parse_int(find_element_value(et, "dc:date", False))
     track_details["disc"] = parse_int(
         find_element_value(et, "upnp:originalDiscNumber", False)
     )
@@ -86,32 +79,18 @@ def parse(metadata):
         find_element_value(et, "upnp:originalTrackCount", False)
     )
     track_details["author"] = find_element_value(et, "dc:author", True)
-    track_details["publisher"] = find_element_value(
-        et, "dc:publisher", False
-    )
-    track_details["published"] = find_element_value(
-        et, "dc:published", False
-    )
-    track_details["description"] = find_element_value(
-        et, "dc:description", False
-    )
-    track_details["rating"] = find_element_value(
-        et, "upnp:rating", False
-    )
+    track_details["publisher"] = find_element_value(et, "dc:publisher", False)
+    track_details["published"] = find_element_value(et, "dc:published", False)
+    track_details["description"] = find_element_value(et, "dc:description", False)
+    track_details["rating"] = find_element_value(et, "upnp:rating", False)
     track_details["channels"] = parse_int(
-        find_element_attribute_value(
-            et, "DIDL-Lite:res", "nrAudioChannels"
-        )
+        find_element_attribute_value(et, "DIDL-Lite:res", "nrAudioChannels")
     )
     track_details["bitDepth"] = parse_int(
-        find_element_attribute_value(
-            et, "DIDL-Lite:res", "bitsPerSample"
-        )
+        find_element_attribute_value(et, "DIDL-Lite:res", "bitsPerSample")
     )
     track_details["sampleRate"] = parse_int(
-        find_element_attribute_value(
-            et, "DIDL-Lite:res", "sampleFrequency"
-        )
+        find_element_attribute_value(et, "DIDL-Lite:res", "sampleFrequency")
     )
     track_details["bitRate"] = parse_int(
         find_element_attribute_value(et, "DIDL-Lite:res", "bitrate")
@@ -135,6 +114,7 @@ def parse(metadata):
 
     return track_details
 
+
 def parse_duration(value):
     if value == None:
         return None
@@ -151,6 +131,7 @@ def parse_duration(value):
 
     return None
 
+
 def parse_int(value):
     if value == None:
         return None
@@ -161,6 +142,7 @@ def parse_int(value):
         return int(numbers[0])
 
     return None
+
 
 def find_element_attribute_value(et, itemKey, itemAttribute):
     namespaces = {
@@ -178,6 +160,7 @@ def find_element_attribute_value(et, itemKey, itemAttribute):
             parsedValue = attribute
 
     return parsedValue
+
 
 def find_element_value(et, itemKey, isArray):
     namespaces = {

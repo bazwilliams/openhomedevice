@@ -155,7 +155,6 @@ class Device(object):
     def pins_enabled(self):
         return self.device.has_service("urn:av-openhome-org:service:Pins:1")
 
-
     async def _get_pin_id_array(self):
         action = self.pins_service.action("GetIdArray")
         result = await action.async_call()
