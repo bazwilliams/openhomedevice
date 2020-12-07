@@ -1,10 +1,24 @@
 import json
+import asyncio
 
 from async_upnp_client import UpnpFactory
 from async_upnp_client.aiohttp import AiohttpRequester
+from async_upnp_client.aiohttp import AiohttpNotifyServer
 
 import openhomedevice.didl_lite as didl_lite
 import xml.etree.ElementTree as etree
+
+def on_event(service, service_variables):
+    """Handle a UPnP event."""
+    print('State variable change for %s, variables: %s',
+                  service,
+                  ','.join([sv.name for sv in service_variables]))
+    obj = {
+        'service_id': service.service_id,
+        'service_type': service.service_type,
+        'state_variables': {sv.name: sv.value for sv in service_variables},
+    }
+    print(json.dumps(obj))
 
 
 class Device(object):
@@ -27,6 +41,24 @@ class Device(object):
         self.info_service = self.device.service("urn:av-openhome-org:service:Info:1")
         self.pins_service = self.device.service("urn:av-openhome-org:service:Pins:1")
         self.radio_service = self.device.service("urn:av-openhome-org:service:Radio:1")
+
+    async def subscribe(self, service):
+        service.on_event = on_event
+        await self.server.event_handler.async_subscribe(service)
+
+    async def setup_subscriptions(self):
+        self.server = AiohttpNotifyServer(self.device.requester, 41234)
+        await self.server.start_server()
+        print('Listening on: %s', self.server.callback_url)
+
+        await self.subscribe(self.product_service)
+        await self.subscribe(self.volume_service)
+        await self.subscribe(self.transport_service)
+        await self.subscribe(self.info_service)
+
+        while True:
+            await asyncio.sleep(120)
+            await self.server.event_handler.async_resubscribe_all()
 
     def uuid(self):
         return self.device.udn
