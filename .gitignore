@@ -4,4 +4,4 @@ venv
 .vscode
 dist
 MANIFEST
-App.py
+*.egg-info
