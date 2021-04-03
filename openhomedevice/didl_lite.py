@@ -3,11 +3,6 @@ import re
 import xml.etree.ElementTree as etree
 
 
-def escape(str):
-    str = str.replace("&", "&amp;")
-    return str
-
-
 def generate_string(track_details):
     title = track_details.get("title", "") or ""
     uri = track_details.get("uri", "") or ""
@@ -34,11 +29,14 @@ def parse(metadata):
         return track_details
 
     try:
-        et = etree.fromstring(escape(metadata)).find(
+        et = etree.fromstring(metadata).find(
             "DIDL-Lite:item",
             {"DIDL-Lite": "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"},
         )
     except:
+        return track_details
+
+    if et is None:
         return track_details
 
     track_details["type"] = find_element_value(et, "upnp:class", False)
