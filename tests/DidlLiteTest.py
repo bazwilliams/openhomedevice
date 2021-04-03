@@ -1,10 +1,11 @@
-from openhomedevice.DidlLite import didlLiteString
 import unittest
+
+from openhomedevice.didl_lite import generate_string
 
 
 class DidlLiteTests(unittest.TestCase):
     def setUp(self):
-        self.sut = didlLiteString
+        self.sut = generate_string
 
     def test_empty_track_details(self):
         track_details = {}
