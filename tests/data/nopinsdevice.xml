@@ -26,11 +26,11 @@
 <eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Product-3/event</eventSubURL>
 </service>
 <service>
-<serviceType>urn:av-openhome-org:service:Volume:3</serviceType>
+<serviceType>urn:av-openhome-org:service:Volume:4</serviceType>
 <serviceId>urn:av-openhome-org:serviceId:Volume</serviceId>
-<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-3/service.xml</SCPDURL>
-<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-3/control</controlURL>
-<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-3/event</eventSubURL>
+<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-4/service.xml</SCPDURL>
+<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-4/control</controlURL>
+<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-4/event</eventSubURL>
 </service>
 <service>
 <serviceType>urn:av-openhome-org:service:Credentials:1</serviceType>
