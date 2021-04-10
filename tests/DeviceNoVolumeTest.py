@@ -5,7 +5,6 @@ import asyncio
 from openhomedevice.Device import Device
 from aioresponses import aioresponses
 
-LOCATION = "http://mydevice:12345/desc.xml"
 
 def async_test(coro):
     def wrapper(*args, **kwargs):
@@ -22,6 +21,7 @@ class DeviceWithNoVolumeTests(unittest.TestCase):
     @async_test
     @aioresponses()
     async def setUp(self, mocked):
+        LOCATION = "http://mydevice:12345/desc.xml"
         with open(
             os.path.join(os.path.dirname(__file__), "data/novolumedevice.xml")
         ) as file:
