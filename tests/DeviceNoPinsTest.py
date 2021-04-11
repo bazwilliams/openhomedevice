@@ -58,7 +58,7 @@ class DeviceWithNoPinsTests(unittest.TestCase):
         return super().setUp()
 
     @async_test
-    async def test_number_of_pins(self):
+    async def test_pins(self):
         result = await self.sut.pins()
         self.assertListEqual(result, list())
 

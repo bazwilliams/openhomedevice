@@ -213,6 +213,36 @@ class FakeInfoService:
     def action(self, action_called):
         return info_actions[action_called]
 
+class FakeGetDeviceMaxAction:
+    async def async_call(self):
+        return {
+            "DeviceMax": 6
+        }
+
+class FakeGetIdArrayAction:
+    async def async_call(self):
+        return {'IdArray': '[1,2,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]'}
+
+class FakeReadListAction:
+    async def async_call(self, Ids):
+        self.Ids = Ids
+        return {'List': '[{"id":1,"mode":"transport","type":"source","uri":"transport:\\/\\/source?udn=4c494e4e-0026-0f22-2963-01387403013f&id=HDMI2&version=1","title":"Sky","description":"","artworkUri":"external:///source?type=Hdmi&systemName=HDMI2","shuffle":false},{"id":2,"mode":"transport","type":"source","uri":"transport:\\/\\/source?udn=4c494e4e-0026-0f22-2963-01387403013f&id=HDMI1&version=1","title":"Playstation 4","description":"","artworkUri":"external:///source?type=Hdmi&systemName=HDMI1","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":3,"mode":"transport","type":"source","uri":"transport:\\/\\/source?udn=4c494e4e-0026-0f22-2963-01387403013f&id=HDMI3&version=1","title":"Fire Stick","description":"","artworkUri":"external:///source?type=Hdmi&systemName=HDMI3","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":4,"mode":"transport","type":"source","uri":"transport:\\/\\/source?udn=4c494e4e-0026-0f22-2963-01387403013f&id=Balanced&version=1","title":"LP12","description":"","artworkUri":"external:///source?type=Analog&systemName=Balanced","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false},{"id":0,"mode":"","type":"","uri":"","title":"","description":"","artworkUri":"","shuffle":false}]'}
+
+class FakeInvokeIndexAction:
+    async def async_call(self, Index):
+        self.Index = Index
+
+pins_actions = {
+    'GetDeviceMax': FakeGetDeviceMaxAction(),
+    'GetIdArray': FakeGetIdArrayAction(),
+    'ReadList': FakeReadListAction(),
+    'InvokeIndex': FakeInvokeIndexAction(),
+}
+
+class FakePinsService:
+    def action(self, action_called):
+        return pins_actions[action_called]
+
 class LinnDeviceTests(unittest.TestCase):
     @async_test
     @aioresponses()
@@ -496,19 +526,19 @@ class LinnDeviceTests(unittest.TestCase):
         self.sut.info_service = FakeInfoService()
         self.assertEqual(await self.sut.track_info(), {'type': 'track', 'title': 'Sabotage', 'uri': 'uri=scd://192.168.1.38:38921', 'artist': ['Beastie Boys', 'Adam Yauch', 'Mike D', 'Ad-Rock'], 'composer': [], 'narrator': [], 'performer': [], 'conductor': [], 'albumArtist': ['Beastie Boys'], 'genre': ['Alternative Pop/Rock', 'Alternative Rap', 'Alternative/Indie Rock', 'Pop/Rock', 'Rap'], 'albumGenre': ['Alternative Pop/Rock', 'Alternative Rap', 'Alternative/Indie Rock', 'Pop/Rock', 'Rap'], 'albumTitle': 'Ill Communication', 'albumArtwork': 'http://192.168.1.38:9100/api/image/cc7cbb0b22dd07348d535f1c0db8278a?scale=fit&width=512&height=512&format=image%2Fpng', 'artwork': None, 'year': 2009, 'disc': None, 'discs': None, 'track': 6, 'tracks': None, 'author': [], 'publisher': None, 'published': None, 'description': None, 'rating': None, 'channels': None, 'bitDepth': None, 'sampleRate': None, 'bitRate': None, 'duration': 178, 'mimeType': None})
 
-    # def test_number_of_pins(self):
-    #     self.assertListEqual(
-    #         self.sut.Pins(),
-    #         [
-    #             {"index": 1, "title": "Sky", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI2'},
-    #             {"index": 2, "title": "Playstation 4", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI1'},
-    #             {"index": 4, "title": "Fire Stick", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI3'},
-    #             {"index": 6, "title": "LP12", 'artworkUri': 'external:///source?type=Analog&systemName=Balanced'},
-    #         ],
-    #     )
+    @async_test
+    async def test_pins(self):
+        self.sut.pins_service = FakePinsService()
+        self.assertListEqual(await self.sut.pins(), [
+                {"index": 1, "title": "Sky", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI2'},
+                {"index": 2, "title": "Playstation 4", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI1'},
+                {"index": 4, "title": "Fire Stick", 'artworkUri': 'external:///source?type=Hdmi&systemName=HDMI3'},
+                {"index": 6, "title": "LP12", 'artworkUri': 'external:///source?type=Analog&systemName=Balanced'},
+            ])
+        self.assertEqual(pins_actions['ReadList'].Ids, '[1, 2, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]')
 
-    # def test_invoke_pin(self):
-    #     self.sut.InvokePin(42)
-    #     self.assertEqual(soap_request_calls[0][1], "urn:av-openhome-org:service:Pins:1")
-    #     self.assertEqual(soap_request_calls[0][2], "InvokeIndex")
-    #     self.assertEqual(soap_request_calls[0][3], "<Index>41</Index>")
+    @async_test
+    async def test_invoke_pin(self):
+        self.sut.pins_service = FakePinsService()
+        await self.sut.invoke_pin(42)
+        self.assertEqual(pins_actions['InvokeIndex'].Index, 41)

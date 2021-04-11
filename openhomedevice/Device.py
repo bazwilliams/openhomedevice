@@ -29,20 +29,43 @@ class Device(object):
         requester = AiohttpRequester()
         factory = UpnpFactory(requester)
         self.device = await factory.async_create_device(self.location)
-        self.product_service = self.device.service(
-            "urn:av-openhome-org:service:Product:3"
-        )
+        if self.device.has_service("urn:av-openhome-org:service:Product:3"):
+            self.product_service = self.device.service(
+                "urn:av-openhome-org:service:Product:3"
+            )
+        elif self.device.has_service("urn:av-openhome-org:service:Product:2"):
+            self.product_service = self.device.service(
+                "urn:av-openhome-org:service:Product:2"
+            )
+        else:
+            self.product_service = self.device.service(
+                "urn:av-openhome-org:service:Product:1"
+            )
         if self.device.has_service("urn:av-openhome-org:service:Volume:4"):
             self.volume_service = self.device.service(
                 "urn:av-openhome-org:service:Volume:4"
             )
-        self.transport_service = self.device.service(
-            "urn:av-openhome-org:service:Transport:1"
-        )
+        elif self.device.has_service("urn:av-openhome-org:service:Volume:3"):
+            self.volume_service = self.device.service(
+                "urn:av-openhome-org:service:Volume:3"
+            )
+        elif self.device.has_service("urn:av-openhome-org:service:Volume:2"):
+            self.volume_service = self.device.service(
+                "urn:av-openhome-org:service:Volume:2"
+            )
+        else:
+            self.volume_service = self.device.service(
+                "urn:av-openhome-org:service:Volume:1"
+            )
+        if self.device.has_service("urn:av-openhome-org:service:Transport:1"):
+            self.transport_service = self.device.service(
+                "urn:av-openhome-org:service:Transport:1"
+            )
         self.info_service = self.device.service("urn:av-openhome-org:service:Info:1")
         if self.device.has_service("urn:av-openhome-org:service:Pins:1"):
             self.pins_service = self.device.service("urn:av-openhome-org:service:Pins:1")
-        self.radio_service = self.device.service("urn:av-openhome-org:service:Radio:1")
+        if self.device.has_service("urn:av-openhome-org:service:Radio:1"):
+            self.radio_service = self.device.service("urn:av-openhome-org:service:Radio:1")
 
     async def subscribe(self, service):
         service.on_event = on_event

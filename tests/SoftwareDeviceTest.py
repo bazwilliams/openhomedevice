@@ -1,137 +1,64 @@
 import unittest
-from unittest.mock import patch
 import os
+import asyncio
+
+from openhomedevice.Device import Device
+from aioresponses import aioresponses
 
 
-def mocked_requests_get(*args, **kwargs):
-    class MockResponse:
-        def __init__(self, payload, status_code):
-            self.payload = payload
-            self.status_code = status_code
-
-        @property
-        def text(self):
-            return self.payload
-
-    with open(os.path.join(os.path.dirname(__file__), "data/softwaredescription.xml")) as file:
-        return MockResponse(file.read(), 200)
-
-
-soap_request_calls = []
-
-
-def mocked_soap_request(*args, **kwargs):
-    global soap_request_calls
-    soap_request_calls.append(args)
-    if args[2] == "Product":
-        with open(
-            os.path.join(os.path.dirname(__file__), "data/softwareProductSoapResponse.xml")
-        ) as file:
-            return file.read()
-    if args[2] == "Standby":
-        with open(
-            os.path.join(
-                os.path.dirname(__file__), "data/softwareProductStandbySoapResponse.xml"
-            )
-        ) as file:
-            return file.read()
-    if args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "GetDeviceMax":
-        with open(
-            os.path.join(
-                os.path.dirname(__file__), "data/pinsDeviceMaxSoapResponse.xml"
-            )
-        ) as file:
-            return file.read()
-    if args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "GetIdArray":
-        with open(
-            os.path.join(
-                os.path.dirname(__file__), "data/pinsGetIdArraySoapResponse.xml"
-            )
-        ) as file:
-            return file.read()
-    if args[1] == "urn:av-openhome-org:service:Pins:1" and args[2] == "ReadList":
-        with open(
-            os.path.join(os.path.dirname(__file__), "data/pinsReadListSoapResponse.xml")
-        ) as file:
-            return file.read()
-    print(args)
+def async_test(coro):
+    def wrapper(*args, **kwargs):
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coro(*args, **kwargs))
+        finally:
+            loop.close()
+    return wrapper
 
 
 class DidlLiteTests(unittest.TestCase):
 
-    LOCATION = "http://mydevice:12345/desc.xml"
-
-    @patch("requests.get", side_effect=mocked_requests_get)
-    @patch("openhomedevice.Soap.soapRequest", side_effect=mocked_soap_request)
-    def setUp(self, patched_soap_request, patched_get):
-        from openhomedevice.Device import Device
-
-        global soap_request_calls
-
-        self.sut = Device(self.LOCATION)
+    @async_test
+    @aioresponses()
+    async def setUp(self, mocked):
+        LOCATION = "http://mydevice:12345/desc.xml"
+        with open(
+            os.path.join(os.path.dirname(__file__), "data/softwaredescription.xml")
+        ) as file:
+            mocked.get(
+                LOCATION,
+                body=file.read()
+            )
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/desc.xml', body='')
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/desc.xml', body='')
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/desc.xml', body='')
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/desc.xml', body='')
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/desc.xml', body='')
+            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/desc.xml', body='')
+        self.sut = Device(LOCATION)
+        await self.sut.init()
         soap_request_calls = []
         return super().setUp()
 
     def test_device_parses_uuid(self):
-        self.assertEqual(self.sut.Uuid(), "509a3dc9-d32b-30a1-ffff-ffff8842af55")
+        self.assertEqual(self.sut.uuid(), "uuid:509a3dc9-d32b-30a1-ffff-ffff8842af55")
 
-    def test_device_advertises_transport_service(self):
-        self.assertFalse(self.sut.HasTransportService())
+    @async_test
+    async def test_skip_forward(self):
+        await self.sut.skip(1)
+        # self.assertEqual(transport_actions['SkipNext'].was_called_times, 1)
 
-    def test_device_name(self):
-        self.assertEqual(self.sut.Name(), b"My Friendly Name")
+    @async_test
+    async def test_skip_backwards(self):
+        await self.sut.skip(-1)
+        # self.assertEqual(transport_actions['SkipPrevious'].was_called_times, 1)
 
-    def test_room_name(self):
-        self.assertEqual(self.sut.Room(), b"Bathroom")
+    @async_test
+    async def test_stop(self):
+        await self.sut.stop()
+        # self.assertTrue(transport_actions["Stop"].was_called)
 
-    def test_set_standby_off(self):
-        self.sut.SetStandby(False)
-        self.assertEqual(soap_request_calls[0][3], "<Value>0</Value>")
-
-    def test_set_standby_on(self):
-        self.sut.SetStandby(True)
-        self.assertEqual(soap_request_calls[0][3], "<Value>1</Value>")
-
-    def test_is_in_standby(self):
-        self.assertEqual(self.sut.IsInStandby(), True)
-
-    def test_play_media_with_nothing(self):
-        self.sut.PlayMedia(None)
-        self.assertEqual(len(soap_request_calls), 0)
-
-    def test_play_media_with_details(self):
-        from openhomedevice.DidlLite import didlLiteString
-
-        track_details = {}
-        track_details["uri"] = "https://host/uri.flac"
-        track_details["title"] = "TITLE"
-        track_details["albumArtwork"] = "https://host/uri.jpg"
-
-        expectedValue = "<Uri>{0}</Uri><Metadata>{1}</Metadata>".format(
-            "https://host/uri.flac", didlLiteString(track_details)
-        )
-        self.sut.PlayMedia(track_details)
-        self.assertEqual(soap_request_calls[0][3], expectedValue)
-
-    def test_play_media_with_invalid_uri(self):
-        from openhomedevice.DidlLite import didlLiteString
-
-        track_details = {}
-        track_details["title"] = "TITLE"
-        track_details["albumArtwork"] = "https://host/uri.jpg"
-
-        expectedValue = "<Uri></Uri><Metadata>{0}</Metadata>".format(
-            didlLiteString(track_details)
-        )
-        self.sut.PlayMedia(track_details)
-        self.assertEqual(soap_request_calls[0][3], expectedValue)
-
-    def test_number_of_pins(self):
-        self.assertListEqual(
-            self.sut.Pins(),
-            [],
-        )
-
-    def test_invoke_pin(self):
-        self.sut.InvokePin(42)
-        self.assertEqual(len(soap_request_calls), 0)
+    @async_test
+    async def test_pause(self):
+        await self.sut.pause()
+        # self.assertTrue(transport_actions["Pause"].was_called)
