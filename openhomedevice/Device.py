@@ -53,10 +53,12 @@ class Device(object):
             self.volume_service = self.device.service(
                 "urn:av-openhome-org:service:Volume:2"
             )
-        else:
+        elif self.device.has_service("urn:av-openhome-org:service:Volume:1"):
             self.volume_service = self.device.service(
                 "urn:av-openhome-org:service:Volume:1"
             )
+        else:
+            self.volume_service = None
         if self.device.has_service("urn:av-openhome-org:service:Transport:1"):
             self.transport_service = self.device.service(
                 "urn:av-openhome-org:service:Transport:1"
@@ -146,7 +148,7 @@ class Device(object):
 
     @property
     def volume_enabled(self):
-        return self.device.has_service("urn:av-openhome-org:service:Volume:4")
+        return self.volume_service is not None
 
     async def volume(self):
         if not self.volume_enabled:

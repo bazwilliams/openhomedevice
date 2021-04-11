@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+<specVersion>
+<major>1</major>
+<minor>1</minor>
+</specVersion>
+<device>
+<deviceType>urn:linn-co-uk:device:Source:1</deviceType>
+<friendlyName>Music Machine</friendlyName>
+<manufacturer>Leading Technology Firm</manufacturer>
+<modelName>My Model</modelName>
+<UDN>uuid:4c494e4e-1234-ab12-abcd-01234567819f</UDN>
+<serviceList>
+<service>
+<serviceType>urn:av-openhome-org:service:Product:2</serviceType>
+<serviceId>urn:av-openhome-org:serviceId:Product</serviceId>
+<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-2/service.xml</SCPDURL>
+<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Product-2/control</controlURL>
+<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Product-2/event</eventSubURL>
+</service>
+<service>
+<serviceType>urn:av-openhome-org:service:Volume:2</serviceType>
+<serviceId>urn:av-openhome-org:serviceId:Volume</serviceId>
+<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-2/service.xml</SCPDURL>
+<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-2/control</controlURL>
+<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Volume-2/event</eventSubURL>
+</service>
+<service>
+<serviceType>urn:av-openhome-org:service:Info:1</serviceType>
+<serviceId>urn:av-openhome-org:serviceId:Info</serviceId>
+<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml</SCPDURL>
+<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Info-1/control</controlURL>
+<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Info-1/event</eventSubURL>
+</service>
+</serviceList>
+<presentationURL>http://10.0.0.1:8080/Ds/index.html</presentationURL>
+</device>
+</root>
