@@ -13,10 +13,11 @@ def async_test(coro):
             return loop.run_until_complete(coro(*args, **kwargs))
         finally:
             loop.close()
+
     return wrapper
 
-class DeviceWithVolume1ServiceTests(unittest.TestCase):
 
+class DeviceWithVolume1ServiceTests(unittest.TestCase):
     @async_test
     @aioresponses()
     async def setUp(self, mocked):
@@ -24,13 +25,19 @@ class DeviceWithVolume1ServiceTests(unittest.TestCase):
         with open(
             os.path.join(os.path.dirname(__file__), "data/v1description.xml")
         ) as file:
+            mocked.get(LOCATION, body=file.read())
             mocked.get(
-                LOCATION,
-                body=file.read()
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-1/service.xml",
+                body="",
             )
-            mocked.get('http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-1/service.xml', body='')
-            mocked.get('http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-1/service.xml', body='')
-            mocked.get('http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml', body='')
+            mocked.get(
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-1/service.xml",
+                body="",
+            )
+            mocked.get(
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml",
+                body="",
+            )
         self.sut = Device(LOCATION)
         await self.sut.init()
         soap_request_calls = []

@@ -8,15 +8,18 @@ from async_upnp_client.aiohttp import AiohttpNotifyServer
 import openhomedevice.didl_lite as didl_lite
 import xml.etree.ElementTree as etree
 
+
 def on_event(service, service_variables):
     """Handle a UPnP event."""
-    print('State variable change for %s, variables: %s',
-                  service,
-                  ','.join([sv.name for sv in service_variables]))
+    print(
+        "State variable change for %s, variables: %s",
+        service,
+        ",".join([sv.name for sv in service_variables]),
+    )
     obj = {
-        'service_id': service.service_id,
-        'service_type': service.service_type,
-        'state_variables': {sv.name: sv.value for sv in service_variables},
+        "service_id": service.service_id,
+        "service_type": service.service_type,
+        "state_variables": {sv.name: sv.value for sv in service_variables},
     }
     print(json.dumps(obj))
 
@@ -25,10 +28,7 @@ class Device(object):
     def __init__(self, location):
         self.location = location
 
-    async def init(self):
-        requester = AiohttpRequester()
-        factory = UpnpFactory(requester)
-        self.device = await factory.async_create_device(self.location)
+    def setup_services(self):
         if self.device.has_service("urn:av-openhome-org:service:Product:3"):
             self.product_service = self.device.service(
                 "urn:av-openhome-org:service:Product:3"
@@ -65,9 +65,19 @@ class Device(object):
             )
         self.info_service = self.device.service("urn:av-openhome-org:service:Info:1")
         if self.device.has_service("urn:av-openhome-org:service:Pins:1"):
-            self.pins_service = self.device.service("urn:av-openhome-org:service:Pins:1")
+            self.pins_service = self.device.service(
+                "urn:av-openhome-org:service:Pins:1"
+            )
         if self.device.has_service("urn:av-openhome-org:service:Radio:1"):
-            self.radio_service = self.device.service("urn:av-openhome-org:service:Radio:1")
+            self.radio_service = self.device.service(
+                "urn:av-openhome-org:service:Radio:1"
+            )
+
+    async def init(self):
+        requester = AiohttpRequester()
+        factory = UpnpFactory(requester)
+        self.device = await factory.async_create_device(self.location)
+        self.setup_services()
 
     async def subscribe(self, service):
         service.on_event = on_event
@@ -76,7 +86,7 @@ class Device(object):
     async def setup_subscriptions(self):
         self.server = AiohttpNotifyServer(self.device.requester, 41234)
         await self.server.start_server()
-        print('Listening on: %s', self.server.callback_url)
+        print("Listening on: %s", self.server.callback_url)
 
         await self.subscribe(self.product_service)
         await self.subscribe(self.volume_service)

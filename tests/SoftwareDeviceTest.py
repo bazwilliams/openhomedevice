@@ -13,11 +13,11 @@ def async_test(coro):
             return loop.run_until_complete(coro(*args, **kwargs))
         finally:
             loop.close()
+
     return wrapper
 
 
 class DidlLiteTests(unittest.TestCase):
-
     @async_test
     @aioresponses()
     async def setUp(self, mocked):
@@ -25,16 +25,31 @@ class DidlLiteTests(unittest.TestCase):
         with open(
             os.path.join(os.path.dirname(__file__), "data/softwaredescription.xml")
         ) as file:
+            mocked.get(LOCATION, body=file.read())
             mocked.get(
-                LOCATION,
-                body=file.read()
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/desc.xml",
+                body="",
             )
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Product/desc.xml', body='')
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/desc.xml', body='')
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/desc.xml', body='')
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/desc.xml', body='')
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/desc.xml', body='')
-            mocked.get('http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/desc.xml', body='')
+            mocked.get(
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Volume/desc.xml",
+                body="",
+            )
+            mocked.get(
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Time/desc.xml",
+                body="",
+            )
+            mocked.get(
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Info/desc.xml",
+                body="",
+            )
+            mocked.get(
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Playlist/desc.xml",
+                body="",
+            )
+            mocked.get(
+                "http://mydevice:12345/dev/509a3dc9-d32b-30a1-ffff-ffff8842af55/svc/av-openhome-org/Credentials/desc.xml",
+                body="",
+            )
         self.sut = Device(LOCATION)
         await self.sut.init()
         soap_request_calls = []
