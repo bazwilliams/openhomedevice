@@ -1,10 +1,10 @@
 import asyncio
-from openhomedevice.device import Device
+from openhomedevice.Device import Device
 import time
 
 async def main():
     locations = [
-        "http://192.168.1.17:55178/4c494e4e-0026-0f21-f15c-01373197013f/Upnp/device.xml"
+        "http://192.168.1.25:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml"
     ]
 
     for location in locations:
