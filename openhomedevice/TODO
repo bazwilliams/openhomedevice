@@ -2,6 +2,7 @@ TODO:
 
 [X] Test older Volume Services
 [X] Test older Product Services
+[X] Reset Stubs
+[X] Refactor
 [] Support play/skip/pause for software
 [] Consider play media for software
-[] Refactor
