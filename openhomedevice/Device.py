@@ -63,6 +63,11 @@ class Device(object):
             self.transport_service = self.device.service(
                 "urn:av-openhome-org:service:Transport:1"
             )
+        else:
+            self.transport_service = None
+            self.playlist_service = self.device.service(
+                "urn:av-openhome-org:service:Playlist:1"
+            )
         self.info_service = self.device.service("urn:av-openhome-org:service:Info:1")
         if self.device.has_service("urn:av-openhome-org:service:Pins:1"):
             self.pins_service = self.device.service(
@@ -118,11 +123,18 @@ class Device(object):
         return (await action.async_call())["Value"]
 
     async def transport_state(self):
-        action = self.transport_service.action("TransportState")
-        return (await action.async_call())["State"]
+        if self.transport_service:
+            action = self.transport_service.action("TransportState")
+            return (await action.async_call()).get("State")
+        else:
+            action = self.playlist_service.action("TransportState")
+            return (await action.async_call()).get("Value")
 
     async def play(self):
-        await self.transport_service.action("Play").async_call()
+        if self.transport_service:
+            await self.transport_service.action("Play").async_call()
+        else:
+            await self.playlist_service.action("Play").async_call()
 
     async def play_media(self, track_details):
         set_channel_action = self.radio_service.action("SetChannel")
@@ -135,17 +147,30 @@ class Device(object):
             await self.radio_service.action("Play").async_call()
 
     async def stop(self):
-        await self.transport_service.action("Stop").async_call()
+        if self.transport_service:
+            await self.transport_service.action("Stop").async_call()
+        else:
+            await self.playlist_service.action("Stop").async_call()
 
     async def pause(self):
-        await self.transport_service.action("Pause").async_call()
+        if self.transport_service:
+            await self.transport_service.action("Pause").async_call()
+        else:
+            await self.playlist_service.action("Pause").async_call()
 
     async def skip(self, offset):
-        action = (
-            self.transport_service.action("SkipNext")
-            if offset > 0
-            else self.transport_service.action("SkipPrevious")
-        )
+        if self.transport_service:
+            action = (
+                self.transport_service.action("SkipNext")
+                if offset > 0
+                else self.transport_service.action("SkipPrevious")
+            )
+        else:
+            action = (
+                self.playlist_service.action("Next")
+                if offset > 0
+                else self.playlist_service.action("Previous")
+            )
         for x in range(0, abs(offset)):
             await action.async_call()
 

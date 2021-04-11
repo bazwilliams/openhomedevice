@@ -6,3 +6,4 @@ TODO:
 [X] Refactor
 [] Support play/skip/pause for software
 [] Consider play media for software
+[] Do not play_media if no radio service

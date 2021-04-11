@@ -32,6 +32,13 @@
 <controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Info-1/control</controlURL>
 <eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/av.openhome.org-Info-1/event</eventSubURL>
 </service>
+<service>
+<serviceType>urn:av-openhome-org:service:Playlist:1</serviceType>
+<serviceId>urn:av-openhome-org:serviceId:Playlist</serviceId>
+<SCPDURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/service.xml</SCPDURL>
+<controlURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/control</controlURL>
+<eventSubURL>/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/event</eventSubURL>
+</service>
 </serviceList>
 <presentationURL>http://10.0.0.1:8080/Ds/index.html</presentationURL>
 </device>

@@ -38,6 +38,10 @@ class DeviceWithVolume3ServiceTests(unittest.TestCase):
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml",
                 body="",
             )
+            mocked.get(
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/service.xml",
+                body="",
+            )
         self.sut = Device(LOCATION)
         await self.sut.init()
         soap_request_calls = []

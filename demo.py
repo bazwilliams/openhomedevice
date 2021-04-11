@@ -4,7 +4,7 @@ import time
 
 async def main():
     locations = [
-        "http://192.168.1.25:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml"
+        "http://192.168.1.32:58570/OsxPlayer-barrys-imac.local/Upnp/device.xml"
     ]
 
     for location in locations:
@@ -16,16 +16,16 @@ async def main():
         print("NAME     : %s" % await device.name())
         print("ROOM     : %s" % await device.room())
         print("UUID     : %s" % device.uuid())
-        print("SOURCE   : %s" % await device.source())
-        print("STANDBY  : %s" % await device.is_in_standby())
+        # print("SOURCE   : %s" % await device.source())
+        # print("STANDBY  : %s" % await device.is_in_standby())
         print("STATE    : %s" % await device.transport_state())
-        print("TRACK    : %s" % await device.track_info())
-        print("HAS VOL  : %s" % device.volume_enabled)
-        print("VOLUME   : %s" % await device.volume())
-        print("MUTED    : %s" % await device.is_muted())
-        print("SOURCES  : %s" % await device.sources())
-        print("HAS PINS : %s" % device.pins_enabled)
-        print("PINS     : %s" % await device.pins())
+        # print("TRACK    : %s" % await device.track_info())
+        # print("HAS VOL  : %s" % device.volume_enabled)
+        # print("VOLUME   : %s" % await device.volume())
+        # print("MUTED    : %s" % await device.is_muted())
+        # print("SOURCES  : %s" % await device.sources())
+        # print("HAS PINS : %s" % device.pins_enabled)
+        # print("PINS     : %s" % await device.pins())
 
 
         # await device.set_standby(False)
