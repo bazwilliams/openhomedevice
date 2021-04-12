@@ -4,6 +4,8 @@ TODO:
 [X] Test older Product Services
 [X] Reset Stubs
 [X] Refactor
-[] Support play/skip/pause for software
-[] Consider play media for software
-[] Do not play_media if no radio service
+[X] Support play/skip/pause for software devices on Playlist
+[X] Support play/pause for software devices on Radio
+[X] Consider play media for software
+[X] Do not play_media if no radio service
+[X] Test with _real_ software player

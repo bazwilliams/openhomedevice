@@ -27,7 +27,22 @@ class FakeAction:
         self.arguments = kwargs
         self.was_called_times += 1
         return self.response
-        
+
+def product_actions():
+    return {
+        "Product": FakeAction({"Name": b"My Friendly Name", "Room": b"Bathroom"}),
+        "SetStandby": FakeAction(),
+        "Standby": FakeAction({"Value": True}),
+        "SourceIndex": FakeAction({"Value": 3}),
+        "Source": FakeAction({"Type": "Radio", "Name": "Radio"}),
+        "SetSourceIndex": FakeAction(),
+        "SourceXml": FakeAction(
+            {
+                "Value": "<SourceList><Source><Name>Playlist</Name><Type>Playlist</Type><Visible>true</Visible><SystemName>Playlist</SystemName></Source><Source><Name>Radio</Name><Type>Radio</Type><Visible>false</Visible><SystemName>Radio</SystemName></Source><Source><Name>UPnP AV</Name><Type>UpnpAv</Type><Visible>false</Visible><SystemName>UPnP AV</SystemName></Source><Source><Name>Songcast</Name><Type>Receiver</Type><Visible>false</Visible><SystemName>Songcast</SystemName></Source><Source><Name>Net Aux</Name><Type>NetAux</Type><Visible>false</Visible><SystemName>Net Aux</SystemName></Source><Source><Name>Spotify</Name><Type>Spotify</Type><Visible>false</Visible><SystemName>Spotify</SystemName></Source><Source><Name>Roon</Name><Type>Scd</Type><Visible>true</Visible><SystemName>Roon</SystemName></Source><Source><Name>SpeakerTest</Name><Type>Private</Type><Visible>false</Visible><SystemName>SpeakerTest</SystemName></Source></SourceList>"
+            }
+        ),
+    }
+
 def playlist_actions():
     return {
         "TransportState": FakeAction({"Value": "Playing"}),
@@ -38,6 +53,14 @@ def playlist_actions():
         "Previous": FakeAction(),
     }
 
+def radio_actions():
+    return {
+        "TransportState": FakeAction({"Value": "Playing"}),
+        "Play": FakeAction(),
+        "Pause": FakeAction(),
+        "Stop": FakeAction(),
+    }
+
 
 class FakeService:
     def __init__(self, actions):
@@ -46,7 +69,7 @@ class FakeService:
     def action(self, action_called):
         return self.actions[action_called]
 
-class DidlLiteTests(unittest.TestCase):
+class OpenhomeDevicePlaylistTest(unittest.TestCase):
     @async_test
     @aioresponses()
     async def setUp(self, mocked):
@@ -105,52 +128,52 @@ class DidlLiteTests(unittest.TestCase):
 
     @async_test
     async def test_transport_state(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
+        self.sut.radio_service = FakeService(radio_actions())
         self.assertEqual(await self.sut.transport_state(), "Playing")
 
     @async_test
     async def test_play(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
+        self.sut.radio_service = FakeService(radio_actions())
         await self.sut.play()
-        self.assertEqual(self.sut.playlist_service.actions["Play"].was_called_times, 1)
+        self.assertEqual(self.sut.radio_service.actions["Play"].was_called_times, 1)
 
     @async_test
     async def test_stop(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
+        self.sut.radio_service = FakeService(radio_actions())
         await self.sut.stop()
-        self.assertEqual(self.sut.playlist_service.actions["Stop"].was_called_times, 1)
+        self.assertEqual(self.sut.radio_service.actions["Stop"].was_called_times, 1)
 
     @async_test
     async def test_pause(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
+        self.sut.radio_service = FakeService(radio_actions())
         await self.sut.pause()
         self.assertEqual(
-            self.sut.playlist_service.actions["Pause"].was_called_times, 1
+            self.sut.radio_service.actions["Pause"].was_called_times, 1
         )
 
     @async_test
-    async def test_skip_forward(self):
+    async def test_skip_forward_does_nothing(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
         await self.sut.skip(10)
         self.assertEqual(
-            self.sut.playlist_service.actions["Next"].was_called_times, 10
+            self.sut.playlist_service.actions["Next"].was_called_times, 0
         )
 
     @async_test
-    async def test_skip_backwards(self):
+    async def test_skip_backwards_does_nothing(self):
+        self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
+        self.sut.radio_service = FakeService(radio_actions())
         await self.sut.skip(-10)
         self.assertEqual(
-            self.sut.playlist_service.actions["Previous"].was_called_times, 10
-        )
-
-    @async_test
-    async def test_skip_nowhere(self):
-        self.sut.playlist_service = FakeService(playlist_actions())
-        await self.sut.skip(0)
-        self.assertEqual(
             self.sut.playlist_service.actions["Previous"].was_called_times, 0
-        )
-        self.assertEqual(
-            self.sut.playlist_service.actions["Next"].was_called_times, 0
         )

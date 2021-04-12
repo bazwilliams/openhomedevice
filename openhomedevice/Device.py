@@ -77,6 +77,8 @@ class Device(object):
             self.radio_service = self.device.service(
                 "urn:av-openhome-org:service:Radio:1"
             )
+        else:
+            self.radio_service = None
 
     async def init(self):
         requester = AiohttpRequester()
@@ -126,20 +128,26 @@ class Device(object):
         if self.transport_service:
             action = self.transport_service.action("TransportState")
             return (await action.async_call()).get("State")
-        else:
-            action = self.playlist_service.action("TransportState")
+
+        if (await self.source())['type'] == 'Radio':
+            action = self.radio_service.action("TransportState")
             return (await action.async_call()).get("Value")
+
+        action = self.playlist_service.action("TransportState")
+        return (await action.async_call()).get("Value")
 
     async def play(self):
         if self.transport_service:
             await self.transport_service.action("Play").async_call()
         else:
-            await self.playlist_service.action("Play").async_call()
+            if (await self.source())['type'] == 'Radio':
+                await self.radio_service.action("Play").async_call()
+            else:
+                await self.playlist_service.action("Play").async_call()
 
     async def play_media(self, track_details):
-        set_channel_action = self.radio_service.action("SetChannel")
-
-        if track_details:
+        if self.radio_service and track_details:
+            set_channel_action = self.radio_service.action("SetChannel")
             uri = track_details.get("uri", "")
             await set_channel_action.async_call(
                 Uri=uri, Metadata=didl_lite.generate_string(track_details)
@@ -150,15 +158,22 @@ class Device(object):
         if self.transport_service:
             await self.transport_service.action("Stop").async_call()
         else:
-            await self.playlist_service.action("Stop").async_call()
+            if (await self.source())['type'] == 'Radio':
+                await self.radio_service.action("Stop").async_call()
+            else:
+                await self.playlist_service.action("Stop").async_call()
 
     async def pause(self):
         if self.transport_service:
             await self.transport_service.action("Pause").async_call()
         else:
-            await self.playlist_service.action("Pause").async_call()
+            if (await self.source())['type'] == 'Radio':
+                await self.radio_service.action("Pause").async_call()
+            else:
+                await self.playlist_service.action("Pause").async_call()
 
     async def skip(self, offset):
+        action = None
         if self.transport_service:
             action = (
                 self.transport_service.action("SkipNext")
@@ -166,13 +181,15 @@ class Device(object):
                 else self.transport_service.action("SkipPrevious")
             )
         else:
-            action = (
-                self.playlist_service.action("Next")
-                if offset > 0
-                else self.playlist_service.action("Previous")
-            )
-        for x in range(0, abs(offset)):
-            await action.async_call()
+            if (await self.source())['type'] == 'Playlist':
+                action = (
+                    self.playlist_service.action("Next")
+                    if offset > 0
+                    else self.playlist_service.action("Previous")
+                )
+        if action:
+            for x in range(0, abs(offset)):
+                await action.async_call()
 
     async def source(self):
         index_action = self.product_service.action("SourceIndex")
