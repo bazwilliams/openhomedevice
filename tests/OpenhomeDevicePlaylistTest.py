@@ -17,7 +17,6 @@ def async_test(coro):
     return wrapper
 
 
-
 class FakeAction:
     def __init__(self, response=None):
         self.was_called_times = 0
@@ -27,6 +26,7 @@ class FakeAction:
         self.arguments = kwargs
         self.was_called_times += 1
         return self.response
+
 
 def product_actions():
     return {
@@ -42,7 +42,8 @@ def product_actions():
             }
         ),
     }
-        
+
+
 def playlist_actions():
     return {
         "TransportState": FakeAction({"Value": "Playing"}),
@@ -60,6 +61,7 @@ class FakeService:
 
     def action(self, action_called):
         return self.actions[action_called]
+
 
 class OpenhomeDevicePlaylistTest(unittest.TestCase):
     @async_test
@@ -143,18 +145,14 @@ class OpenhomeDevicePlaylistTest(unittest.TestCase):
         self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
         await self.sut.pause()
-        self.assertEqual(
-            self.sut.playlist_service.actions["Pause"].was_called_times, 1
-        )
+        self.assertEqual(self.sut.playlist_service.actions["Pause"].was_called_times, 1)
 
     @async_test
     async def test_skip_forward(self):
         self.sut.product_service = FakeService(product_actions())
         self.sut.playlist_service = FakeService(playlist_actions())
         await self.sut.skip(10)
-        self.assertEqual(
-            self.sut.playlist_service.actions["Next"].was_called_times, 10
-        )
+        self.assertEqual(self.sut.playlist_service.actions["Next"].was_called_times, 10)
 
     @async_test
     async def test_skip_backwards(self):
@@ -173,6 +171,4 @@ class OpenhomeDevicePlaylistTest(unittest.TestCase):
         self.assertEqual(
             self.sut.playlist_service.actions["Previous"].was_called_times, 0
         )
-        self.assertEqual(
-            self.sut.playlist_service.actions["Next"].was_called_times, 0
-        )
+        self.assertEqual(self.sut.playlist_service.actions["Next"].was_called_times, 0)

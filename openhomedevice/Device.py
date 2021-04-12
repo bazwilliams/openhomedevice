@@ -129,7 +129,7 @@ class Device(object):
             action = self.transport_service.action("TransportState")
             return (await action.async_call()).get("State")
 
-        if (await self.source())['type'] == 'Radio':
+        if (await self.source())["type"] == "Radio":
             action = self.radio_service.action("TransportState")
             return (await action.async_call()).get("Value")
 
@@ -140,7 +140,7 @@ class Device(object):
         if self.transport_service:
             await self.transport_service.action("Play").async_call()
         else:
-            if (await self.source())['type'] == 'Radio':
+            if (await self.source())["type"] == "Radio":
                 await self.radio_service.action("Play").async_call()
             else:
                 await self.playlist_service.action("Play").async_call()
@@ -158,7 +158,7 @@ class Device(object):
         if self.transport_service:
             await self.transport_service.action("Stop").async_call()
         else:
-            if (await self.source())['type'] == 'Radio':
+            if (await self.source())["type"] == "Radio":
                 await self.radio_service.action("Stop").async_call()
             else:
                 await self.playlist_service.action("Stop").async_call()
@@ -167,7 +167,7 @@ class Device(object):
         if self.transport_service:
             await self.transport_service.action("Pause").async_call()
         else:
-            if (await self.source())['type'] == 'Radio':
+            if (await self.source())["type"] == "Radio":
                 await self.radio_service.action("Pause").async_call()
             else:
                 await self.playlist_service.action("Pause").async_call()
@@ -181,7 +181,7 @@ class Device(object):
                 else self.transport_service.action("SkipPrevious")
             )
         else:
-            if (await self.source())['type'] == 'Playlist':
+            if (await self.source())["type"] == "Playlist":
                 action = (
                     self.playlist_service.action("Next")
                     if offset > 0
