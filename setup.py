@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name = 'openhomedevice',
-  version = '1.0.0',
+  version = '1.1.0',
   author = 'Barry John Williams',
   author_email = 'barry@bjw.me.uk',
   description='Provides an API for requesting information from an Openhome device',
@@ -13,7 +13,7 @@ setuptools.setup(
   long_description_content_type="text/markdown",
   url='https://github.com/bazwilliams/openhomedevice',
   packages=setuptools.find_packages(),
-  download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/0.4.3',
+  download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/1.1.0',
   keywords = ['upnp', 'dlna', 'openhome', 'linn', 'ds', 'music', 'render', 'async'],
   install_requires = ['async_upnp_client', 'lxml'],
       classifiers=[

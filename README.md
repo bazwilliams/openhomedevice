@@ -4,6 +4,9 @@ Library to provide an API to an existing openhome device. The device needs to ha
 
 The underlying UPnP client library used is https://github.com/StevenLooman/async_upnp_client
 
+* Tested against [Linn Products Ltd](https://www.linn.co.uk/uk/) devices running Davaar 80 (thought expected to work on earlier variants)
+* Tested against [OpenHome Player](http://openhome.org/) devices
+
 ## Installation
 
 `pip install openhomedevice`

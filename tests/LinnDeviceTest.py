@@ -224,7 +224,7 @@ class LinnDeviceTests(unittest.TestCase):
         self.assertEqual(await self.sut.name(), b"My Friendly Name")
 
     @async_test
-    async def test_device_name(self):
+    async def test_device_room(self):
         self.sut.product_service = FakeService(product_actions())
         self.assertEqual(await self.sut.room(), b"Bathroom")
 
