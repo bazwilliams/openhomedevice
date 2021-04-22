@@ -29,13 +29,23 @@ class Device(object):
         self.location = location
 
     def setup_services(self):
-        self.product_service = self.device.service_id('urn:av-openhome-org:serviceId:Product')
-        self.volume_service = self.device.service_id('urn:av-openhome-org:serviceId:Volume')
-        self.transport_service = self.device.service_id('urn:av-openhome-org:serviceId:Transport')
-        self.playlist_service = self.device.service_id('urn:av-openhome-org:serviceId:Playlist')
+        self.product_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Product"
+        )
+        self.volume_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Volume"
+        )
+        self.transport_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Transport"
+        )
+        self.playlist_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Playlist"
+        )
         self.info_service = self.device.service_id("urn:av-openhome-org:serviceId:Info")
-        self.pins_service = self.device.service_id('urn:av-openhome-org:serviceId:Pins')
-        self.radio_service = self.device.service_id('urn:av-openhome-org:serviceId:Radio')
+        self.pins_service = self.device.service_id("urn:av-openhome-org:serviceId:Pins")
+        self.radio_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Radio"
+        )
 
     async def init(self):
         requester = AiohttpRequester()
