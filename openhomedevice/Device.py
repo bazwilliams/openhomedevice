@@ -29,56 +29,13 @@ class Device(object):
         self.location = location
 
     def setup_services(self):
-        if self.device.has_service("urn:av-openhome-org:service:Product:3"):
-            self.product_service = self.device.service(
-                "urn:av-openhome-org:service:Product:3"
-            )
-        elif self.device.has_service("urn:av-openhome-org:service:Product:2"):
-            self.product_service = self.device.service(
-                "urn:av-openhome-org:service:Product:2"
-            )
-        else:
-            self.product_service = self.device.service(
-                "urn:av-openhome-org:service:Product:1"
-            )
-        if self.device.has_service("urn:av-openhome-org:service:Volume:4"):
-            self.volume_service = self.device.service(
-                "urn:av-openhome-org:service:Volume:4"
-            )
-        elif self.device.has_service("urn:av-openhome-org:service:Volume:3"):
-            self.volume_service = self.device.service(
-                "urn:av-openhome-org:service:Volume:3"
-            )
-        elif self.device.has_service("urn:av-openhome-org:service:Volume:2"):
-            self.volume_service = self.device.service(
-                "urn:av-openhome-org:service:Volume:2"
-            )
-        elif self.device.has_service("urn:av-openhome-org:service:Volume:1"):
-            self.volume_service = self.device.service(
-                "urn:av-openhome-org:service:Volume:1"
-            )
-        else:
-            self.volume_service = None
-        if self.device.has_service("urn:av-openhome-org:service:Transport:1"):
-            self.transport_service = self.device.service(
-                "urn:av-openhome-org:service:Transport:1"
-            )
-        else:
-            self.transport_service = None
-            self.playlist_service = self.device.service(
-                "urn:av-openhome-org:service:Playlist:1"
-            )
-        self.info_service = self.device.service("urn:av-openhome-org:service:Info:1")
-        if self.device.has_service("urn:av-openhome-org:service:Pins:1"):
-            self.pins_service = self.device.service(
-                "urn:av-openhome-org:service:Pins:1"
-            )
-        if self.device.has_service("urn:av-openhome-org:service:Radio:1"):
-            self.radio_service = self.device.service(
-                "urn:av-openhome-org:service:Radio:1"
-            )
-        else:
-            self.radio_service = None
+        self.product_service = self.device.service_id('urn:av-openhome-org:serviceId:Product')
+        self.volume_service = self.device.service_id('urn:av-openhome-org:serviceId:Volume')
+        self.transport_service = self.device.service_id('urn:av-openhome-org:serviceId:Transport')
+        self.playlist_service = self.device.service_id('urn:av-openhome-org:serviceId:Playlist')
+        self.info_service = self.device.service_id("urn:av-openhome-org:serviceId:Info")
+        self.pins_service = self.device.service_id('urn:av-openhome-org:serviceId:Pins')
+        self.radio_service = self.device.service_id('urn:av-openhome-org:serviceId:Radio')
 
     async def init(self):
         requester = AiohttpRequester()
