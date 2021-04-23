@@ -2,7 +2,7 @@ import unittest
 import os
 import asyncio
 
-from openhomedevice.Device import Device
+from openhomedevice.device import Device
 from aioresponses import aioresponses
 from openhomedevice.didl_lite import generate_string
 
