@@ -1,9 +1,9 @@
 import json
 import asyncio
 
-from async_upnp_client import UpnpFactory
+from async_upnp_client.client_factory import UpnpFactory
 from async_upnp_client.aiohttp import AiohttpRequester
-from async_upnp_client.aiohttp import AiohttpNotifyServer
+# from async_upnp_client.aiohttp import AiohttpNotifyServer
 
 import openhomedevice.didl_lite as didl_lite
 import xml.etree.ElementTree as etree
