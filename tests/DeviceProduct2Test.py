@@ -28,19 +28,19 @@ class DeviceWithProduct2ServiceTests(unittest.TestCase):
             mocked.get(LOCATION, body=file.read())
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-2/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-2/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
         self.sut = Device(LOCATION)
         await self.sut.init()

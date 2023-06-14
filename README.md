@@ -39,6 +39,14 @@ await device.init()
     await invoke_pin(index) #positive integer (use Pins() for indices)
 ```
 
+#### Firmware
+
+```python
+    await check_latest_firmware() #check for the latest firmware
+    await update_firmware() #update the device firmware
+    await software_status() #returns a dictionary with information about the current software
+```
+
 #### Informational
 
 ```python
@@ -132,17 +140,76 @@ await device.init()
 }
 ```
 
+##### SoftwareStatus response
+
+When an update is available:
+
+```python
+{
+   "status":"update_available",
+   "current_software":{
+      "version":"4.99.491",
+      "topic":"main",
+      "channel":"release"
+   },
+   "update_info":{
+      "legal":{
+         "licenseurl":"http://products.linn.co.uk/VersionInfo/licenseV2.txt",
+         "privacyurl":"https://www.linn.co.uk/privacy",
+         "privacyuri":"https://products.linn.co.uk/VersionInfo/PrivacyV1.json",
+         "privacyversion":1
+      },
+      "releasenotesuri":"http://docs.linn.co.uk/wiki/index.php/ReleaseNotes",
+      "updates":[
+         {
+            "channel":"release",
+            "date":"07 Jun 2023 12:29:48",
+            "description":"Release build version 4.100.502 (07 Jun 2023 12:29:48)",
+            "exaktlink":"3",
+            "manifest":"https://cloud.linn.co.uk/update/components/836/4.100.502/manifest.json",
+            "topic":"main",
+            "variant":"836",
+            "version":"4.100.502"
+         }
+      ],
+      "exaktUpdates":[]
+   }
+}
+```
+
+When the system is on the latest firmware:
+
+```python
+{
+   "status":"on_latest",
+   "current_software":{
+      "version":"4.100.502",
+      "topic":"main",
+      "channel":"release"
+   }
+}
+```
+
+##### Upgrading Firmware
+
+Use this to check if an update is required and then instruct the device to apply it
+
+```python
+    await openhomeDevice.check_latest_firmware()
+    await openhomeDevice.update_firmware()
+```
+
 ##### Playing A Track
 
 Use this to play a short audio track, a podcast Uri or radio station Uri. The audio will be played using the radio source of the device. The `trackDetails` object should be the same as the one described in the `TrackInfo` section above.
 
 ```python
-    trackDetails = {}
-    trackDetails["uri"] = "http://opml.radiotime.com/Tune.ashx?id=s122119"
-    trackDetails["title"] = 'Linn Radio (Eclectic Music)'
-    trackDetails["albumArtwork"] = 'http://cdn-radiotime-logos.tunein.com/s122119q.png'
+    track_details = {}
+    track_details["uri"] = "http://opml.radiotime.com/Tune.ashx?id=s122119"
+    track_details["title"] = 'Linn Radio (Eclectic Music)'
+    track_details["albumArtwork"] = 'http://cdn-radiotime-logos.tunein.com/s122119q.png'
 
-    openhomeDevice.PlayMedia(trackDetails)
+    openhomeDevice.PlayMedia(track_details)
 ```
 
 ## Example

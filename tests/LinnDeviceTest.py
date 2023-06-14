@@ -43,6 +43,13 @@ def pins_actions():
         "InvokeIndex": FakeAction(),
     }
 
+def firmware_actions():
+    return {
+        "GetSoftwareStatus": FakeAction({ "SoftwareStatus": '{"status": "on_latest", "current_software": {"version": "4.100.502", "topic": "main", "channel": "release"}}'}),
+        "CheckNow": FakeAction(),
+        "Apply": FakeAction()
+    }
+
 
 def info_actions():
     return {
@@ -116,99 +123,99 @@ class LinnDeviceTests(unittest.TestCase):
             mocked.get(LOCATION, body=file.read())
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-ConfigApp-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-3/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Product-4/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Volume-4/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Credentials-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
+            )
+            mocked.get(
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-OAuth-1/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Time-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Info-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Config-2/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Transport-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Pins-1/service.xml",
-                body="",
-            )
-            mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Update-2/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Diagnostics-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Volkano-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Privacy-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Exakt-4/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Exakt-5/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Configuration-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Exakt2-1/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Exakt2-4/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-ExaktInputs-1/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Update-3/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Cloud-1/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-Cloud-2/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Playlist-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Radio-1/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Radio-2/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Receiver-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Sender-2/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
                 "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/linn.co.uk-LipSync-1/service.xml",
-                body="",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
             mocked.get(
-                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Debug-1/service.xml",
-                body="",
+                "http://mydevice:12345/4c494e4e-1234-ab12-abcd-01234567819f/Upnp/av.openhome.org-Debug-2/service.xml",
+                body="<scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><serviceStateTable/></scpd>",
             )
         self.sut = Device(LOCATION)
         await self.sut.init()
@@ -506,3 +513,25 @@ class LinnDeviceTests(unittest.TestCase):
         self.assertEqual(
             self.sut.pins_service.actions["InvokeIndex"].arguments["Index"], 41
         )
+    
+    @async_test
+    async def test_check_software(self):
+        self.sut.update_service = FakeService(firmware_actions())
+        result = await self.sut.software_status()
+        self.assertEqual(result["status"], "on_latest")
+        self.assertEqual(result["current_software"]["version"], "4.100.502")
+
+    @async_test
+    async def test_check_latest_firmware(self):
+        self.sut.update_service = FakeService(firmware_actions())
+        await self.sut.check_latest_firmware()
+        self.assertEqual(
+            self.sut.update_service.actions["CheckNow"].was_called_times, 1)
+
+    @async_test
+    async def test_check_latest_firmware(self):
+        self.sut.update_service = FakeService(firmware_actions())
+        await self.sut.update_firmware()
+        self.assertEqual(
+            self.sut.update_service.actions["Apply"].was_called_times, 1)
+

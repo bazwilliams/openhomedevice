@@ -6,3 +6,6 @@ dist
 MANIFEST
 *.egg-info
 .coverage
+lib
+bin
+pyvenv.cfg

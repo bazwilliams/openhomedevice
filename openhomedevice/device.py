@@ -46,6 +46,7 @@ class Device(object):
         self.radio_service = self.device.service_id(
             "urn:av-openhome-org:serviceId:Radio"
         )
+        self.update_service = self.device.service_id("urn:linn-co-uk:serviceId:Update")
 
     async def init(self):
         requester = AiohttpRequester()
@@ -266,3 +267,18 @@ class Device(object):
     async def invoke_pin(self, pin_id):
         if self.pins_enabled:
             await self.pins_service.action("InvokeIndex").async_call(Index=(pin_id - 1))
+
+    async def software_status(self):
+        if self.update_service:
+            action = self.update_service.action("GetSoftwareStatus")
+            result = await action.async_call()
+            return json.loads(result["SoftwareStatus"])
+
+    async def check_latest_firmware(self):
+        if self.update_service:
+            action = await self.update_service.action("CheckNow").async_call()
+
+    async def update_firmware(self):
+        if self.update_service:
+            await self.update_service.action("Apply").async_call()
+

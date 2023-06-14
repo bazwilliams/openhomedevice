@@ -4,8 +4,9 @@ import time
 
 async def main():
     locations = [
-        "http://192.168.1.32:53101/OsxPlayer-barrys-imac.local/Upnp/device.xml",
-        "http://192.168.1.24:55178/4c494e4e-0026-0f21-f15c-01373197013f/Upnp/device.xml"
+        #"http://192.168.1.32:53101/OsxPlayer-barrys-imac.local/Upnp/device.xml",
+        "http://192.168.4.69:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml",
+        "http://192.168.4.64:55178/4c494e4e-0026-0f22-2963-01387403013f/Upnp/device.xml"
     ]
 
     for location in locations:
@@ -27,7 +28,10 @@ async def main():
         print("SOURCES  : %s" % await device.sources())
         print("HAS PINS : %s" % device.pins_enabled)
         print("PINS     : %s" % await device.pins())
+        print("SOFTWARE : %s" % await device.software_status())
 
+        #await device.check_latest_firmware()
+        #await device.update_firmware()
 
         await device.set_standby(False)
         await device.set_volume(30)
