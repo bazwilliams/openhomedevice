@@ -75,6 +75,15 @@ class Device(object):
     def uuid(self):
         return self.device.udn
 
+    def manufacturer(self):
+        return self.device.manufacturer
+    
+    def model_name(self):
+        return self.device.model_name
+    
+    def friendly_name(self):
+        return self.device.friendly_name
+
     async def name(self):
         action = self.product_service.action("Product")
         return (await action.async_call())["Name"]

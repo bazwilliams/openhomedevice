@@ -51,6 +51,9 @@ await device.init()
 
 ```python
     uuid() #Unique identifier
+    manufacturer() #Manufacturer
+    model_name() #Model Name
+    friendly_name() #Friendly Name
     await name() #Name of device
     await room() #Name of room
     await is_in_standby() #returns true if in standby

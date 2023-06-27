@@ -225,6 +225,15 @@ class LinnDeviceTests(unittest.TestCase):
     def test_device_parses_uuid(self):
         self.assertEqual(self.sut.uuid(), "uuid:4c494e4e-1234-ab12-abcd-01234567819f")
 
+    def test_device_parses_model_name(self):
+        self.assertEqual(self.sut.model_name(), "My Model")
+
+    def test_device_parses_manufacturer(self):
+        self.assertEqual(self.sut.manufacturer(), "Leading Technology Firm")
+
+    def test_device_parses_friendly_name(self):
+        self.assertEqual(self.sut.friendly_name(), "Music Machine")
+
     @async_test
     async def test_device_name(self):
         self.sut.product_service = FakeService(product_actions())
