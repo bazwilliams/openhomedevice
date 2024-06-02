@@ -34,6 +34,12 @@ class DidlLiteTests(unittest.TestCase):
         )
         self.assertEqual(result, {})
 
+    def test_parse_special_chars(self):
+        result = parse(
+            '<?xml version="1.0" encoding="UTF-8"?><DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oh="http://www.openhome.org"><item id="0" parentID="0" restricted="1"><upnp:class>object.item.audioItem.musicTrack</upnp:class><dc:title>Apostrophe&apos;</dc:title><upnp:album>Apostrophe(&apos;)</upnp:album><upnp:artist>Frank Zappa</upnp:artist><upnp:albumArtURI>https://i.scdn.co/image/ab67616d0000b27385b05f4bb3c88cf252f96b68</upnp:albumArtURI><res protocolInfo="spotify:*:audio/L16:*" duration="00:05:49.786/1000" bitsPerSample="16" sampleFrequency="44100" nrAudioChannels="2" size="61562336">spotify://connect</res></item></DIDL-Lite>'
+        )
+        self.assertEqual(result["title"], "Apostrophe'")
+
     def test_empty_track_details(self):
         track_details = {}
         result = generate_string(track_details)

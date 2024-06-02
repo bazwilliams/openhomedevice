@@ -5,8 +5,8 @@ import time
 async def main():
     locations = [
         #"http://192.168.1.32:53101/OsxPlayer-barrys-imac.local/Upnp/device.xml",
-        "http://192.168.4.69:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml",
-        "http://192.168.4.64:55178/4c494e4e-0026-0f22-2963-01387403013f/Upnp/device.xml"
+        "http://192.168.68.85:55178/4c494e4e-0026-0f21-bf92-01303737013f/Upnp/device.xml"
+        # "http://192.168.4x.64:55178/4c494e4e-0026-0f22-2963-01387403013f/Upnp/device.xml"
     ]
 
     for location in locations:
