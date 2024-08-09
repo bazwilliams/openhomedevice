@@ -47,6 +47,8 @@ class Device(object):
             "urn:av-openhome-org:serviceId:Radio"
         )
         self.update_service = self.device.service_id("urn:linn-co-uk:serviceId:Update")
+        self.sender_service = self.device.service_id("urn:av-openhome-org:serviceId:Sender")
+        self.receiver_service = self.device.service_id("urn:av-openhome-org:serviceId:Receiver")
 
     async def init(self):
         requester = AiohttpRequester()
@@ -291,3 +293,15 @@ class Device(object):
         if self.update_service:
             await self.update_service.action("Apply").async_call()
 
+
+    async def songcast_sender_metadata(self):
+        if self.sender_service:
+            action = self.sender_service.action("Metadata")
+            result = await action.async_call()
+            uri = didl_lite.parse(result["Value"])["uri"]
+            return [uri, result["Value"]]
+
+    async def songcast_receiver_set_sender(self, uri, metadata):
+        if self.receiver_service:
+            action = self.receiver_service.action("SetSender")
+            await action.async_call(Uri = uri, Metadata = metadata)
