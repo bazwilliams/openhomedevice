@@ -254,7 +254,9 @@ class Device(object):
         sources = []
         index = 0
         for source_xml in sources_list_xml:
-            visible = source_xml.find("Visible").text == "true"
+            # Linn emits <Visible>true</Visible>, AURALiC emits <Visible>1</Visible>
+            visible_text = (source_xml.find("Visible").text or "").strip().lower()
+            visible = visible_text in ("true", "1")
             if visible:
                 sources.append(
                     {
