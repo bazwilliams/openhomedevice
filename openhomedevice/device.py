@@ -189,8 +189,14 @@ class Device(object):
                 if offset > 0
                 else self.transport_service.action("SkipPrevious")
             )
-        else:
-            if (await self.source())["type"] == "Playlist":
+        elif self.playlist_service:
+            # Fall back to the Playlist service when the current source is
+            # Playlist — or when the device doesn't report a source type at
+            # all. AURALiC (Lightning) units return empty Name/Type from the
+            # Source action even mid-playback, which used to make skip() a
+            # silent no-op there (verified against a live ALTAIR G1).
+            source_type = (await self.source())["type"]
+            if source_type == "Playlist" or not source_type:
                 action = (
                     self.playlist_service.action("Next")
                     if offset > 0
