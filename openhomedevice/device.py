@@ -47,6 +47,9 @@ class Device(object):
             "urn:av-openhome-org:serviceId:Radio"
         )
         self.update_service = self.device.service_id("urn:linn-co-uk:serviceId:Update")
+        self.hardware_config_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:HardwareConfig"
+        )
 
     async def init(self):
         requester = AiohttpRequester()
@@ -100,6 +103,35 @@ class Device(object):
     async def is_in_standby(self):
         action = self.product_service.action("Standby")
         return (await action.async_call())["Value"]
+
+    async def is_halted(self):
+        """Whether the device is in its halted (deep sleep) state.
+
+        Backed by the proprietary HardwareConfig service found on AURALiC
+        (Lightning platform) devices. In the halted state the device keeps its
+        network stack up and serves HardwareConfig, while the standard OpenHome
+        services (Product, Transport, ...) are deregistered — so this is the
+        only standby-style query that works there. Returns None when the device
+        does not expose HardwareConfig.
+        """
+        if not self.hardware_config_service:
+            return None
+        action = self.hardware_config_service.action("GetHaltStatus")
+        return (await action.async_call())["HaltStatus"]
+
+    async def set_halt(self, halt_requested):
+        """Enter (True) or leave (False) the halted state.
+
+        Waking (False) transitions the device into standby: the OpenHome
+        services re-register — typically on new dynamic ports, so callers
+        should re-discover and re-init after waking. No-op when the device
+        does not expose HardwareConfig.
+        """
+        if not self.hardware_config_service:
+            return
+        await self.hardware_config_service.action("SetHaltStatus").async_call(
+            HaltStatus=halt_requested
+        )
 
     async def transport_state(self):
         if self.transport_service:
