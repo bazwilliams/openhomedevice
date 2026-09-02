@@ -47,6 +47,12 @@ class Device(object):
             "urn:av-openhome-org:serviceId:Radio"
         )
         self.update_service = self.device.service_id("urn:linn-co-uk:serviceId:Update")
+        self.sender_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Sender"
+        )
+        self.receiver_service = self.device.service_id(
+            "urn:av-openhome-org:serviceId:Receiver"
+        )
 
     async def init(self):
         requester = AiohttpRequester()
@@ -291,3 +297,104 @@ class Device(object):
         if self.update_service:
             await self.update_service.action("Apply").async_call()
 
+    @property
+    def songcast_sender_enabled(self):
+        return self.sender_service is not None
+
+    @property
+    def songcast_receiver_enabled(self):
+        return self.receiver_service is not None
+
+    async def songcast_sender_status(self):
+        """Sending state of this device: Enabled, Disabled or Blocked."""
+        if not self.songcast_sender_enabled:
+            return None
+
+        action = self.sender_service.action("Status")
+        return (await action.async_call())["Value"]
+
+    async def songcast_sender_audio(self):
+        """True when this device is actively broadcasting audio."""
+        if not self.songcast_sender_enabled:
+            return None
+
+        action = self.sender_service.action("Audio")
+        return (await action.async_call())["Value"]
+
+    async def songcast_sender(self):
+        """This device as a songcast sender, or None if it cannot send."""
+        if not self.songcast_sender_enabled:
+            return None
+
+        action = self.sender_service.action("Metadata")
+        metadata = (await action.async_call())["Value"]
+        uri = didl_lite.parse(metadata).get("uri")
+
+        if not uri:
+            return None
+
+        return {"uri": uri, "metadata": metadata}
+
+    async def songcast_receiver_sender(self):
+        """The sender this device is following, or None if it is not in a group."""
+        if not self.songcast_receiver_enabled:
+            return None
+
+        action = self.receiver_service.action("Sender")
+        result = await action.async_call()
+        uri = result.get("Uri")
+
+        if not uri:
+            return None
+
+        return {"uri": uri, "metadata": result.get("Metadata")}
+
+    async def songcast_receiver_transport_state(self):
+        if not self.songcast_receiver_enabled:
+            return None
+
+        action = self.receiver_service.action("TransportState")
+        return (await action.async_call())["Value"]
+
+    async def _receiver_source_index(self):
+        """Index of the Receiver source, which may be hidden from sources()."""
+        action = self.product_service.action("SourceXml")
+        result = await action.async_call()
+
+        for index, source_xml in enumerate(etree.fromstring(result["Value"])):
+            if source_xml.find("Type").text == "Receiver":
+                return index
+
+        return None
+
+    async def songcast_receiver_join(self, sender):
+        """Follow a sender, as returned by songcast_sender() on another device.
+
+        Linn firmware selects the Receiver source itself in response to Play, so
+        the source is only set explicitly when it has not already switched.
+        """
+        if not self.songcast_receiver_enabled or not sender:
+            return
+
+        await self.receiver_service.action("SetSender").async_call(
+            Uri=sender["uri"], Metadata=sender.get("metadata", "")
+        )
+        await self.receiver_service.action("Play").async_call()
+
+        index = await self._receiver_source_index()
+        if index is None:
+            return
+
+        current = (await self.product_service.action("SourceIndex").async_call())[
+            "Value"
+        ]
+        if current != index:
+            await self.set_source(index)
+
+    async def songcast_receiver_leave(self):
+        """Stop following a sender and clear it, so no stale sender is left set."""
+        if not self.songcast_receiver_enabled:
+            return
+
+        await self.receiver_service.action("Stop").async_call()
+        await self.receiver_service.action("SetSender").async_call(Uri="", Metadata="")
