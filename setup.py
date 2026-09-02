@@ -12,7 +12,7 @@ setuptools.setup(
   long_description=long_description,
   long_description_content_type="text/markdown",
   url='https://github.com/bazwilliams/openhomedevice',
-  packages=setuptools.find_packages(),
+  packages=setuptools.find_packages(exclude=["tests", "tools"]),
   download_url = 'https://github.com/bazwilliams/openhomedevice/tarball/2.1',
   keywords = ['upnp', 'dlna', 'openhome', 'linn', 'ds', 'music', 'render', 'async'],
   install_requires = ['async_upnp_client>=0.40'],
