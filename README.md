@@ -39,6 +39,13 @@ await device.init()
     await invoke_pin(index) #positive integer (use Pins() for indices)
 ```
 
+#### Songcast
+
+```python
+    await songcast_receiver_join(sender) #follow a sender from songcast_sender()
+    await songcast_receiver_leave() #stop following and clear the sender
+```
+
 #### Firmware
 
 ```python
@@ -59,13 +66,20 @@ await device.init()
     await is_in_standby() #returns true if in standby
     await transport_state() #returns one of Stopped, Playing, Paused or Buffering.
     volume_enabled #property true if the volume service is available
-    await volume_level() #returns the volume setting or None if disabled
+    await volume() #returns the volume setting or None if disabled
     await is_muted() #returns true if muted or None if disabled
     await source() #returns the currently connected source as a dictionary
     await sources() #returns an array of source dictionaries with indices
     await track_info() #returns a track dictionary
     await pins() #returns an array of pin dictionaries with indices
     pins_enabled #property true if the pins service is available
+    songcast_sender_enabled #property true if the sender service is available
+    songcast_receiver_enabled #property true if the receiver service is available
+    await songcast_sender_status() #Enabled, Disabled or Blocked, or None if unavailable
+    await songcast_sender_audio() #true if this device is broadcasting audio
+    await songcast_sender() #this device as a sender, or None if it cannot send
+    await songcast_receiver_sender() #the sender being followed, or None
+    await songcast_receiver_transport_state() #Stopped, Waiting, Playing or Buffering
 ```
 
 ##### Source Response
@@ -96,6 +110,19 @@ await device.init()
   {'index': 4, 'title': 'Classic FM', 'artworkUri': 'http://cdn-profiles.tunein.com/s8439/images/logoq.png?t=1'}
   {'index': 6, 'title': 'Chillout Playlist', 'artworkUri': 'http://media/artwork/chillout-playlist.png'}
 ]
+```
+
+##### Songcast Sender Response
+
+Returned by `songcast_sender()`, and by `songcast_receiver_sender()` for the
+sender a device is currently following. `None` when the device cannot send, or
+when it is not following anyone.
+
+```python
+{
+    'uri': 'ohz://239.255.255.250:51972/4c494e4e-0026-0f21-1234-01234567013f',
+    'metadata': '<DIDL-Lite ...><item id="0" restricted="True">...</item></DIDL-Lite>'
+}
 ```
 
 ##### TrackInfo Response
@@ -198,8 +225,8 @@ When the system is on the latest firmware:
 Use this to check if an update is required and then instruct the device to apply it
 
 ```python
-    await openhomeDevice.check_latest_firmware()
-    await openhomeDevice.update_firmware()
+    await openhome_device.check_latest_firmware()
+    await openhome_device.update_firmware()
 ```
 
 ##### Playing A Track
@@ -212,13 +239,48 @@ Use this to play a short audio track, a podcast Uri or radio station Uri. The au
     track_details["title"] = 'Linn Radio (Eclectic Music)'
     track_details["albumArtwork"] = 'http://cdn-radiotime-logos.tunein.com/s122119q.png'
 
-    openhomeDevice.PlayMedia(track_details)
+    await openhome_device.play_media(track_details)
 ```
+
+##### Grouping Rooms With Songcast
+
+One device broadcasts its audio as a Songcast sender, and others follow it as
+receivers, so several rooms play the same thing in sync.
+
+`songcast_receiver_join` sets the sender and starts the receiver playing. Linn
+firmware selects the Songcast source itself in response, so there is no need to
+call `set_source` first. `songcast_receiver_leave` stops the receiver and clears
+the sender, rather than leaving a stale one configured.
+
+```python
+    sender = await kitchen.songcast_sender()
+
+    if sender is not None:
+        await living_room.songcast_receiver_join(sender)
+
+    # ... later
+    await living_room.songcast_receiver_leave()
+```
+
+A receiver reports `Waiting` from `songcast_receiver_transport_state()` when it
+is following a sender that is not currently broadcasting any audio. Use
+`songcast_sender_audio()` on the sender to tell that apart from a sender that is
+genuinely playing.
+
+Not every device can send: `songcast_sender()` returns `None` when the sender
+service is missing or reports no metadata, and `songcast_sender_status()`
+distinguishes `Enabled` from `Disabled` and `Blocked`.
 
 ## Example
 
 ```python
 python3 demo.py
+```
+
+The addresses in `demo.py` are hardcoded. To find the devices on your network:
+
+```sh
+python3 tools/discovery.py
 ```
 
 ## Running Tests
@@ -231,9 +293,15 @@ PYTHONPATH=. pytest ./tests/*
 
 Following guide from https://packaging.python.org/tutorials/packaging-projects/
 
-Update version in `setup.py`
+Update `version` and `download_url` in `setup.py`, then tag the release so the
+`download_url` tarball resolves:
 
 ```sh
-python3 setup.py sdist
-twine upload dist/*
+python3 -m build
+python3 -m twine check dist/*
+git tag <version> && git push origin <version>
+python3 -m twine upload dist/*
 ```
+
+The description shown on PyPI is baked into each release from this file, so a
+README change only appears there once a new version is published.
