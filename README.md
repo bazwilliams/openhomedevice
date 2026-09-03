@@ -1,5 +1,7 @@
 # openhomedevice
 
+[![Tests](https://github.com/bazwilliams/openhomedevice/actions/workflows/tests.yml/badge.svg)](https://github.com/bazwilliams/openhomedevice/actions/workflows/tests.yml)
+
 Library to provide an API to an existing openhome device. The device needs to have been discovered first by something like netdisco (https://github.com/home-assistant/netdisco).
 
 The underlying UPnP client library used is https://github.com/StevenLooman/async_upnp_client
@@ -285,16 +287,28 @@ python3 tools/discovery.py
 
 ## Running Tests
 
+Install the package and the test dependencies, then run the suite:
+
 ```bash
+python3 -m pip install . -r requirements-test.txt
 PYTHONPATH=. pytest ./tests/*
 ```
 
-## Uploading Package
+The same suite runs on GitHub Actions against Python 3.10 to 3.14 for every
+push and pull request, so a proposed change shows a pass or fail on the pull
+request itself. The workflow is `.github/workflows/tests.yml`.
+
+`requirements-test.txt` holds `aiohttp<3.14`: `aioresponses`, which the tests
+use to mock the device, constructs an aiohttp `ClientResponse` by hand and
+aiohttp 3.14 added a required argument to that constructor. Without the pin
+every mocked request fails. The pin can go once `aioresponses` catches up.
+
+## Releasing
 
 Following guide from https://packaging.python.org/tutorials/packaging-projects/
 
 Update `version` and `download_url` in `setup.py`, then tag the release so the
-`download_url` tarball resolves:
+`download_url` tarball resolves, and publish to PyPI:
 
 ```sh
 python3 -m build
@@ -302,6 +316,29 @@ python3 -m twine check dist/*
 git tag <version> && git push origin <version>
 python3 -m twine upload dist/*
 ```
+
+Then publish a GitHub release for that tag:
+
+```sh
+gh release create <version> --generate-notes
+```
+
+`--generate-notes` writes the release notes from the pull requests and commits
+merged since the previous release, so contributions that arrived as PRs are
+listed and credited without anything being written by hand. Review the
+generated notes afterwards and add a line about anything a consumer of the
+library has to act on, such as a changed method signature.
+
+Pushing the tag is not enough on its own: a tag does not appear on the releases
+page, and a release created later will only generate notes back to the previous
+release, not for work the tag has already gone out with. Create the release at
+the same time as the tag. If a tag was already pushed without one, the release
+can still be created against it, and the notes filled in by hand where the
+generated set is incomplete.
+
+Release notes matter beyond this repository. Home Assistant reviews a
+dependency bump by reading what changed between the old and new versions, so a
+version with no release is extra work for whoever is handling the bump.
 
 The description shown on PyPI is baked into each release from this file, so a
 README change only appears there once a new version is published.
