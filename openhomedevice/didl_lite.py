@@ -33,7 +33,10 @@ def parse(metadata):
             "DIDL-Lite:item",
             {"DIDL-Lite": "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"},
         )
-    except:
+    except (etree.ParseError, TypeError):
+        # ParseError for malformed XML, TypeError for metadata that is not
+        # text at all. Previously a bare except, which also swallowed
+        # KeyboardInterrupt and SystemExit.
         return track_details
 
     if et is None:

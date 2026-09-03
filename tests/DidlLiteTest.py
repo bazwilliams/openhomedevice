@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from openhomedevice.didl_lite import generate_string, parse, parse_duration, parse_int
 
@@ -27,6 +28,23 @@ class DidlLiteTests(unittest.TestCase):
             '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"><item id="" parentID="" restricted="True"><dc:title></dc:title><res protocolInfo="*:*:*:*"></res><upnp:albumArtURI></upnp:albumArtURI><upnp:class>object.item.audioItem</upnp:class></itemX></DIDL-Lite>'
         )
         self.assertEqual(result, {})
+
+    def test_parse_malformed_xml(self):
+        self.assertEqual(parse("this is not xml at all"), {})
+
+    def test_parse_non_text_metadata(self):
+        """Guarded because the old bare except silently accepted anything."""
+        self.assertEqual(parse(42), {})
+        self.assertEqual(parse([]), {})
+
+    def test_parse_does_not_swallow_keyboard_interrupt(self):
+        """The bare except this replaced caught BaseException too."""
+        with mock.patch(
+            "openhomedevice.didl_lite.etree.fromstring",
+            side_effect=KeyboardInterrupt,
+        ):
+            with self.assertRaises(KeyboardInterrupt):
+                parse("<a/>")
 
     def test_parse_didlite_missing_item(self):
         result = parse(

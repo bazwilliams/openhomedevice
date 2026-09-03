@@ -22,6 +22,46 @@ device = Device(location)
 await device.init()
 ```
 
+Pass an existing `aiohttp.ClientSession` to reuse it and its connection pool.
+Without one, every request opens and closes a session of its own, which is
+wasteful when polling a device:
+
+```python
+device = Device(location, session=session)
+await device.init()
+```
+
+The session is never closed by this library. Whoever created it owns it.
+
+### Errors
+
+Every method that talks to the device raises one of these, so callers do not
+need to know that `async_upnp_client` is underneath:
+
+```python
+from openhomedevice.exceptions import (
+    OpenhomeError,             # base class for all of the below
+    OpenhomeConnectionError,   # device could not be reached
+    OpenhomeTimeoutError,      # device did not answer in time
+    OpenhomeDeviceError,       # device answered, but refused or replied unusably
+)
+```
+
+`OpenhomeTimeoutError` is a subclass of `OpenhomeConnectionError`, so catching
+the latter covers a device that is off or unreachable for any reason.
+`OpenhomeDeviceError` means the device is reachable but something else is
+wrong: a SOAP fault, an HTTP error status, or a response that could not be
+parsed. The original exception is kept as `__cause__`.
+
+```python
+try:
+    await device.init()
+except OpenhomeConnectionError:
+    ...  # device is off or off the network
+except OpenhomeDeviceError:
+    ...  # device answered with something unusable
+```
+
 ### Methods
 
 #### Control
