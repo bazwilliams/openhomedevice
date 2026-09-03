@@ -347,15 +347,19 @@ every mocked request fails. The pin can go once `aioresponses` catches up.
 
 Following guide from https://packaging.python.org/tutorials/packaging-projects/
 
-Update `version` and `download_url` in `setup.py`, then tag the release so the
-`download_url` tarball resolves, and publish to PyPI:
+Update `version` in `setup.py`, then tag the release and publish to PyPI:
 
 ```sh
+rm -rf dist
 python3 -m build
 python3 -m twine check dist/*
 git tag <version> && git push origin <version>
 python3 -m twine upload dist/*
 ```
+
+`dist` is cleared first because it keeps the artifacts of previous releases,
+and `twine upload dist/*` would then try to upload a version that is already
+on PyPI.
 
 Then publish a GitHub release for that tag:
 
