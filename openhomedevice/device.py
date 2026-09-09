@@ -180,6 +180,32 @@ class Device(object):
         action = self.playlist_service.action("TransportState")
         return (await action.async_call()).get("Value")
 
+    async def _stream_capability(self, name):
+        if self.transport_service is None:
+            return None
+
+        result = await self.transport_service.action("StreamInfo").async_call()
+        return result.get(name)
+
+    async def _mode_capability(self, name):
+        if self.transport_service is None:
+            return None
+
+        result = await self.transport_service.action("ModeInfo").async_call()
+        return result.get(name)
+
+    @_translates_errors
+    async def can_pause(self):
+        return await self._stream_capability("CanPause")
+
+    @_translates_errors
+    async def can_skip_next(self):
+        return await self._mode_capability("CanSkipNext")
+
+    @_translates_errors
+    async def can_skip_previous(self):
+        return await self._mode_capability("CanSkipPrevious")
+
     @_translates_errors
     async def play(self):
         if self.transport_service:

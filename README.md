@@ -107,6 +107,9 @@ except OpenhomeDeviceError:
     await room() #Name of room
     await is_in_standby() #returns true if in standby
     await transport_state() #returns one of Stopped, Playing, Paused or Buffering.
+    await can_pause() #true if what is playing can be paused, None if unknown
+    await can_skip_next() #true if the next track can be skipped to
+    await can_skip_previous() #true if the previous track can be skipped to
     volume_enabled #property true if the volume service is available
     await volume() #returns the volume setting or None if disabled
     await is_muted() #returns true if muted or None if disabled
