@@ -1,9 +1,17 @@
-import functools
-import json
 import asyncio
+import functools
+import inspect
+import json
+import logging
+import time
+from datetime import timedelta
 
 from async_upnp_client.client_factory import UpnpFactory
-from async_upnp_client.aiohttp import AiohttpRequester, AiohttpSessionRequester
+from async_upnp_client.aiohttp import (
+    AiohttpNotifyServer,
+    AiohttpRequester,
+    AiohttpSessionRequester,
+)
 from async_upnp_client.exceptions import (
     UpnpCommunicationError,
     UpnpConnectionError,
@@ -11,12 +19,12 @@ from async_upnp_client.exceptions import (
     UpnpError,
     UpnpResponseError,
 )
-
-# from async_upnp_client.aiohttp import AiohttpNotifyServer
+from async_upnp_client.utils import async_get_local_ip
 
 import openhomedevice.didl_lite as didl_lite
 import openhomedevice.source_list as source_list
 
+from openhomedevice.events import EventTranslator
 from openhomedevice.services import (
     INFO_SERVICE_ID,
     PINS_SERVICE_ID,
@@ -35,19 +43,17 @@ from openhomedevice.exceptions import (
     OpenhomeTimeoutError,
 )
 
-# def on_event(service, service_variables):
-#     """Handle a UPnP event."""
-#     print(
-#         "State variable change for %s, variables: %s",
-#         service,
-#         ",".join([sv.name for sv in service_variables]),
-#     )
-#     obj = {
-#         "service_id": service.service_id,
-#         "service_type": service.service_type,
-#         "state_variables": {sv.name: sv.value for sv in service_variables},
-#     }
-#     print(json.dumps(obj))
+_LOGGER = logging.getLogger(__name__)
+
+SUBSCRIBE_TIMEOUT = timedelta(minutes=30)
+RESUBSCRIBE_TOLERANCE = timedelta(minutes=1)
+MINIMUM_RENEWAL_INTERVAL = timedelta(seconds=10)
+
+
+def _renewal_time(now, timeout):
+    granted = timeout.total_seconds()
+    margin = min(RESUBSCRIBE_TOLERANCE.total_seconds(), granted / 2)
+    return now + max(granted - margin, MINIMUM_RENEWAL_INTERVAL.total_seconds())
 
 
 def _translates_errors(func):
@@ -81,16 +87,33 @@ def _translates_errors(func):
 
 
 class Device(object):
-    def __init__(self, location, session=None):
+    def __init__(self, location, session=None, event_handler=None):
         """Create a device for the description document at location.
 
         Pass session, an aiohttp.ClientSession, to reuse an existing session
         and its connection pool. Without one every request opens and closes
         a session of its own, which is wasteful when polling a device. The
         session is not closed by this library: whoever created it owns it.
+
+        Pass event_handler, an async_upnp_client UpnpEventHandler, to receive
+        events through a notify server you already run, which is worth doing
+        when several devices could otherwise each start a listener of their
+        own. Without one subscribe() starts a notify server for this device
+        and stops it again on unsubscribe(). As with the session, a handler
+        you supply stays yours to shut down.
         """
         self.location = location
         self.session = session
+
+        self._event_handler = event_handler
+        self._notify_server = None
+        # SID of each live subscription, against the monotonic time it needs
+        # renewing by.
+        self._subscriptions = {}
+        self._resubscriber_task = None
+        self._callback = None
+        self._translator = None
+        self._callback_tasks = set()
 
     def setup_services(self):
         self.product_service = self.device.service_id(PRODUCT_SERVICE_ID)
@@ -114,23 +137,212 @@ class Device(object):
         self.device = await factory.async_create_device(self.location)
         self.setup_services()
 
-    # async def subscribe(self, service):
-    #     service.on_event = on_event
-    #     await self.server.event_handler.async_subscribe(service)
+    @property
+    def is_subscribed(self):
+        return bool(self._subscriptions)
 
-    # async def setup_subscriptions(self):
-    #     self.server = AiohttpNotifyServer(self.device.requester, 41234)
-    #     await self.server.start_server()
-    #     print("Listening on: %s", self.server.callback_url)
+    @property
+    def events_enabled(self):
+        """Needs Product, Transport and Info. Volume is optional, since a
+        device at unity gain has no Volume service to advertise."""
+        return all(
+            service is not None
+            for service in (
+                self.product_service,
+                self.transport_service,
+                self.info_service,
+            )
+        )
 
-    #     await self.subscribe(self.product_service)
-    #     await self.subscribe(self.volume_service)
-    #     await self.subscribe(self.transport_service)
-    #     await self.subscribe(self.info_service)
+    @_translates_errors
+    async def subscribe(self, callback):
+        """Call callback with a dict of changes whenever the device reports one.
 
-    #     while True:
-    #         await asyncio.sleep(120)
-    #         await self.server.event_handler.async_resubscribe_all()
+        Each key is named for the method returning the same value, and only
+        what changed is present, except on the first event after subscribing
+        when the device sends its whole state. callback may be a plain
+        function or a coroutine function.
+
+        Raises OpenhomeDeviceError when events_enabled is False. Subscribing
+        again replaces the callback rather than stacking.
+
+        Subscriptions are renewed in the background. If one cannot be renewed
+        the rest are released and the callback is called a final time with
+        {"is_subscribed": False}, after which no further events arrive.
+        """
+        if not self.events_enabled:
+            raise OpenhomeDeviceError(
+                "This device cannot be subscribed to: it is missing one of "
+                "the Product, Transport or Info services. Poll it instead."
+            )
+
+        if self._subscriptions:
+            await self.unsubscribe()
+
+        self._callback = callback
+        self._translator = EventTranslator()
+        event_handler = await self._ensure_event_handler()
+
+        now = time.monotonic()
+        try:
+            for service in self._evented_services():
+                service.on_event = self._on_event
+                sid, timeout = await event_handler.async_subscribe(
+                    service, timeout=SUBSCRIBE_TIMEOUT
+                )
+                self._subscriptions[sid] = _renewal_time(now, timeout)
+        except UpnpError:
+            # A caller whose subscribe() raised will not call unsubscribe().
+            await self.unsubscribe()
+            raise
+
+        self._resubscriber_task = asyncio.create_task(
+            self._resubscribe_loop(),
+            name=f"openhomedevice resubscriber for {self.location}",
+        )
+
+    async def unsubscribe(self):
+        """Stop receiving events. Never raises, and safe when not subscribed."""
+        # Emptied before awaiting, so the renewal loop cannot renew one of these.
+        sids = list(self._subscriptions)
+        self._subscriptions.clear()
+
+        await self._stop_resubscriber()
+        await self._teardown(sids)
+
+    async def _teardown(self, sids):
+        """Separate from unsubscribe() because the renewal loop tears down
+        too, and cannot call it: that awaits the task it runs on."""
+        event_handler = self._active_event_handler
+        if event_handler is not None:
+            for sid in sids:
+                try:
+                    await event_handler.async_unsubscribe(sid)
+                except (UpnpError, KeyError) as err:
+                    _LOGGER.debug("Could not unsubscribe %s: %r", sid, err)
+
+        for service in self._evented_services():
+            service.on_event = None
+
+        # Only a server we started is ours to stop.
+        if self._notify_server is not None:
+            await self._notify_server.async_stop_server()
+            self._notify_server = None
+
+        self._callback = None
+        self._translator = None
+
+    def _evented_services(self):
+        candidates = (
+            self.product_service,
+            self.volume_service,
+            self.transport_service,
+            self.info_service,
+        )
+        return [service for service in candidates if service is not None]
+
+    @property
+    def _active_event_handler(self):
+        if self._event_handler is not None:
+            return self._event_handler
+        if self._notify_server is not None:
+            return self._notify_server.event_handler
+        return None
+
+    async def _ensure_event_handler(self):
+        if self._event_handler is not None:
+            return self._event_handler
+
+        if self._notify_server is None:
+            _, local_ip = await async_get_local_ip(self.location)
+            # Port 0: a fixed one would stop a second device listening here.
+            self._notify_server = AiohttpNotifyServer(
+                requester=self.device.requester,
+                source=(local_ip, 0),
+            )
+            await self._notify_server.async_start_server()
+            _LOGGER.debug(
+                "Listening for events from %s on %s",
+                self.location,
+                self._notify_server.callback_url,
+            )
+
+        return self._notify_server.event_handler
+
+    def _on_event(self, service, state_variables):
+        if self._callback is None or self._translator is None:
+            return
+
+        changes = self._translator.translate(service.service_id, state_variables)
+        if changes:
+            self._deliver(changes)
+
+    def _deliver(self, changes):
+        if self._callback is None:
+            return
+
+        try:
+            result = self._callback(changes)
+        except Exception:
+            # The notify server may be shared, so one bad callback must not
+            # bring down everything else subscribed through it.
+            _LOGGER.exception("Error in openhomedevice event callback")
+            return
+
+        if inspect.isawaitable(result):
+            task = asyncio.create_task(result)
+            # asyncio only holds a weak reference, so keep one until it ends.
+            self._callback_tasks.add(task)
+            task.add_done_callback(self._callback_tasks.discard)
+
+    async def _resubscribe_loop(self):
+        while self._subscriptions:
+            due = min(self._subscriptions.values())
+            # Always sleeps, even when overdue, so a renewal that is already
+            # due cannot loop round without pausing and block the event loop.
+            await asyncio.sleep(max(due - time.monotonic(), 0))
+            await self._resubscribe()
+
+    async def _resubscribe(self):
+        """Half a subscription is worse than none: some values would go
+        stale while others kept arriving, with no way to tell which."""
+        event_handler = self._active_event_handler
+        if event_handler is None:
+            return
+
+        now = time.monotonic()
+        # Emptied up front so is_subscribed is honest whichever way this goes.
+        pending = list(self._subscriptions)
+        self._subscriptions.clear()
+        renewed = {}
+
+        for position, sid in enumerate(pending):
+            try:
+                new_sid, timeout = await event_handler.async_resubscribe(
+                    sid, timeout=SUBSCRIBE_TIMEOUT
+                )
+            except (UpnpError, KeyError) as err:
+                _LOGGER.warning("Could not renew subscription %s: %r", sid, err)
+                # Before the teardown, which lets go of the callback.
+                self._deliver({"is_subscribed": False})
+                await self._teardown(list(renewed) + pending[position + 1 :])
+                return
+
+            renewed[new_sid] = _renewal_time(now, timeout)
+
+        self._subscriptions = renewed
+
+    async def _stop_resubscriber(self):
+        task = self._resubscriber_task
+        if task is None:
+            return
+
+        self._resubscriber_task = None
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
     def uuid(self):
         return self.device.udn

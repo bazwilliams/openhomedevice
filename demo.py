@@ -16,7 +16,6 @@ async def main():
         await device.init()
         devices.append(device)
 
-        # await device.setup_subscriptions()
         print("----")
         print("NAME     : %s" % await device.name())
         print("ROOM     : %s" % await device.room())
@@ -97,6 +96,38 @@ async def main():
     await receiver.songcast_receiver_leave()
     await receiver.set_standby(True)
     print("FOLLOWING: %s" % await receiver.songcast_receiver_sender())
+
+    print("----")
+
+    # Events: watch one device push its changes instead of being polled.
+    watched = devices[0]
+
+    def on_event(changes):
+        if not changes:
+            print("EVENT    : subscription lost")
+            return
+        for key, value in changes.items():
+            print("EVENT    : %s = %s" % (key, value))
+
+    print("CAN EVENT: %s" % watched.events_enabled)
+    if not watched.events_enabled:
+        print("This device cannot be subscribed to; polling is the only option")
+        return
+
+    await watched.subscribe(on_event)
+    print("SUBSCRIBED: %s" % watched.is_subscribed)
+
+    # The first event carries the whole state, then only what changes.
+    await asyncio.sleep(2)
+
+    volume = await watched.volume()
+    await watched.set_volume(volume + 1)
+    await asyncio.sleep(2)
+    await watched.set_volume(volume)
+    await asyncio.sleep(2)
+
+    await watched.unsubscribe()
+    print("SUBSCRIBED: %s" % watched.is_subscribed)
 
     print("----")
 

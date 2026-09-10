@@ -33,6 +33,10 @@ await device.init()
 
 The session is never closed by this library. Whoever created it owns it.
 
+Pass an `event_handler` to receive events through a notify server you already
+run, rather than letting the device start one of its own. See
+[Sharing a notify server](#sharing-a-notify-server).
+
 ### Errors
 
 Every method that talks to the device raises one of these, so callers do not
@@ -62,11 +66,139 @@ except OpenhomeDeviceError:
     ...  # device answered with something unusable
 ```
 
+### Events
+
+Rather than polling, a device can be asked to push its changes. `subscribe`
+takes a callback and returns once the device has accepted the subscription:
+
+```python
+def on_event(changes):
+    print(changes)  # {"volume": 42, "is_muted": False}
+
+await device.subscribe(on_event)
+...
+await device.unsubscribe()
+```
+
+The callback may be a plain function or a coroutine function. It is given a
+dictionary holding only what changed, using the same keys and the same types
+the matching method would have returned:
+
+| Key | Service | Same as |
+| --- | --- | --- |
+| `is_in_standby` | Product | `is_in_standby()` |
+| `source` | Product | `source()` |
+| `sources` | Product | `sources()` |
+| `room` | Product | `room()` |
+| `name` | Product | `name()` |
+| `volume` | Volume | `volume()` |
+| `is_muted` | Volume | `is_muted()` |
+| `transport_state` | Transport | `transport_state()` |
+| `can_pause` | Transport | `can_pause()` |
+| `can_skip_next` | Transport | `can_skip_next()` |
+| `can_skip_previous` | Transport | `can_skip_previous()` |
+| `track_info` | Info | `track_info()` |
+| `is_subscribed` | — | `is_subscribed`, on losing the subscription |
+
+The first callback after subscribing carries the device's whole state, because
+that is what a device sends when a subscription begins. After that only the
+values that actually changed are present, so check for a key rather than
+assuming it is there.
+
+A callback that raises is logged and otherwise ignored: the notify server
+behind a subscription may be shared with other devices, and one broken
+callback must not stop the rest of them receiving anything.
+
+#### Losing a subscription
+
+Subscriptions expire, and are renewed in the background for as long as they
+last. If one cannot be renewed, usually because the device has gone off the
+network, the rest are released and the callback is called a final time with
+`is_subscribed` set to `False`. No further events arrive after that:
+
+```python
+def on_event(changes):
+    if changes.get("is_subscribed") is False:
+        ...  # state is now stale; resubscribe or go back to polling
+        return
+```
+
+It is all or nothing: one subscription that cannot be renewed ends them all,
+because holding half a subscription is worse than holding none. Some values
+would go stale while others kept arriving, with no way to tell which were
+which. `is_subscribed` on the device agrees with the event.
+
+#### Devices that cannot be subscribed to
+
+Subscribing needs the Product, Transport and Info services. Check
+`events_enabled` before subscribing; `subscribe()` raises
+`OpenhomeDeviceError` on a device that has not got them:
+
+```python
+if device.events_enabled:
+    await device.subscribe(on_event)
+else:
+    ...  # poll instead
+```
+
+Older firmware and some third party renderers have no Transport service and
+report transport state through Radio or Playlist instead. Which of the two is
+authoritative depends on the source selected, so neither can be subscribed to,
+and transport state is the one value a caller is least able to do without.
+Rather than offer a subscription that leaves it behind, none is offered: a
+caller polling `transport_state()` on a timer may as well poll the rest and
+skip the listener entirely.
+
+A device with no Volume service is still served. Volume control can be
+switched off, leaving the device at unity gain with no service to advertise,
+so there is no volume for a caller to miss.
+
+#### Sharing a notify server
+
+Events arrive over HTTP, so a subscription needs something listening. By
+default the device starts a listener of its own on subscribe and stops it
+again on unsubscribe. When several devices are involved it is better to run
+one listener and hand it to each of them:
+
+```python
+from async_upnp_client.aiohttp import AiohttpNotifyServer, AiohttpRequester
+from async_upnp_client.utils import async_get_local_ip
+
+_, local_ip = await async_get_local_ip(location)
+server = AiohttpNotifyServer(requester=AiohttpRequester(), source=(local_ip, 0))
+await server.async_start_server()
+
+device = Device(location, event_handler=server.event_handler)
+```
+
+As with the session, a notify server you supply is never stopped by this
+library. Whoever created it owns it.
+
+#### When events do not arrive
+
+A subscription only works if the device can reach the listener, which puts
+two requirements on the host running this library.
+
+The callback address must be on the device's own subnet. A device refuses
+one that is not, and `subscribe()` raises `OpenhomeDeviceError` carrying
+HTTP 412. Hosts behind NAT, such as some container and virtual machine
+setups, advertise an address the device cannot route to and are refused for
+this reason.
+
+The device must also be able to open a connection back to the listener.
+Nothing reports a problem here: the subscription is accepted, `subscribe()`
+returns, `is_subscribed` is `True`, and no events ever arrive. A firewall
+that permits outbound but blocks inbound connections produces exactly this,
+so it is worth ruling out first when a subscription looks healthy but is
+silent.
+
 ### Methods
 
 #### Control
 
 ```python
+    await subscribe(callback) #push changes to callback instead of polling
+    await unsubscribe() #stop receiving changes
     await set_standby(standbyRequested) #bool
     await play() #starts playback
     await play_media(track_details) #start playing `track_details`
@@ -110,6 +242,11 @@ except OpenhomeDeviceError:
     await can_pause() #true if what is playing can be paused, None if unknown
     await can_skip_next() #true if the next track can be skipped to
     await can_skip_previous() #true if the previous track can be skipped to
+<<<<<<< HEAD
+=======
+    is_subscribed #property true while subscribed to the device's events
+    events_enabled #property true if this device can be subscribed to
+>>>>>>> 9f27828 (Subscribe to device events instead of polling)
     volume_enabled #property true if the volume service is available
     await volume() #returns the volume setting or None if disabled
     await is_muted() #returns true if muted or None if disabled
