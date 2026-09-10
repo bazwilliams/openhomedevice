@@ -11,11 +11,24 @@ from async_upnp_client.exceptions import (
     UpnpError,
     UpnpResponseError,
 )
+
 # from async_upnp_client.aiohttp import AiohttpNotifyServer
 
 import openhomedevice.didl_lite as didl_lite
 import xml.etree.ElementTree as etree
 
+from openhomedevice.services import (
+    INFO_SERVICE_ID,
+    PINS_SERVICE_ID,
+    PLAYLIST_SERVICE_ID,
+    PRODUCT_SERVICE_ID,
+    RADIO_SERVICE_ID,
+    RECEIVER_SERVICE_ID,
+    SENDER_SERVICE_ID,
+    TRANSPORT_SERVICE_ID,
+    UPDATE_SERVICE_ID,
+    VOLUME_SERVICE_ID,
+)
 from openhomedevice.exceptions import (
     OpenhomeConnectionError,
     OpenhomeDeviceError,
@@ -81,30 +94,16 @@ class Device(object):
         self.session = session
 
     def setup_services(self):
-        self.product_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Product"
-        )
-        self.volume_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Volume"
-        )
-        self.transport_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Transport"
-        )
-        self.playlist_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Playlist"
-        )
-        self.info_service = self.device.service_id("urn:av-openhome-org:serviceId:Info")
-        self.pins_service = self.device.service_id("urn:av-openhome-org:serviceId:Pins")
-        self.radio_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Radio"
-        )
-        self.update_service = self.device.service_id("urn:linn-co-uk:serviceId:Update")
-        self.sender_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Sender"
-        )
-        self.receiver_service = self.device.service_id(
-            "urn:av-openhome-org:serviceId:Receiver"
-        )
+        self.product_service = self.device.service_id(PRODUCT_SERVICE_ID)
+        self.volume_service = self.device.service_id(VOLUME_SERVICE_ID)
+        self.transport_service = self.device.service_id(TRANSPORT_SERVICE_ID)
+        self.playlist_service = self.device.service_id(PLAYLIST_SERVICE_ID)
+        self.info_service = self.device.service_id(INFO_SERVICE_ID)
+        self.pins_service = self.device.service_id(PINS_SERVICE_ID)
+        self.radio_service = self.device.service_id(RADIO_SERVICE_ID)
+        self.update_service = self.device.service_id(UPDATE_SERVICE_ID)
+        self.sender_service = self.device.service_id(SENDER_SERVICE_ID)
+        self.receiver_service = self.device.service_id(RECEIVER_SERVICE_ID)
 
     @_translates_errors
     async def init(self):
@@ -349,7 +348,7 @@ class Device(object):
 
     @property
     def pins_enabled(self):
-        return self.device.has_service("urn:av-openhome-org:service:Pins:1")
+        return self.pins_service is not None
 
     async def _get_pin_id_array(self):
         action = self.pins_service.action("GetIdArray")
