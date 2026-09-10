@@ -15,7 +15,7 @@ from async_upnp_client.exceptions import (
 # from async_upnp_client.aiohttp import AiohttpNotifyServer
 
 import openhomedevice.didl_lite as didl_lite
-import xml.etree.ElementTree as etree
+import openhomedevice.source_list as source_list
 
 from openhomedevice.services import (
     INFO_SERVICE_ID,
@@ -34,7 +34,6 @@ from openhomedevice.exceptions import (
     OpenhomeDeviceError,
     OpenhomeTimeoutError,
 )
-
 
 # def on_event(service, service_variables):
 #     """Handle a UPnP event."""
@@ -138,10 +137,10 @@ class Device(object):
 
     def manufacturer(self):
         return self.device.manufacturer
-    
+
     def model_name(self):
         return self.device.model_name
-    
+
     def friendly_name(self):
         return self.device.friendly_name
 
@@ -323,22 +322,7 @@ class Device(object):
     async def sources(self):
         action = self.product_service.action("SourceXml")
         result = await action.async_call()
-        sources_list_xml = etree.fromstring(result["Value"])
-
-        sources = []
-        index = 0
-        for source_xml in sources_list_xml:
-            visible = source_xml.find("Visible").text == "true"
-            if visible:
-                sources.append(
-                    {
-                        "index": index,
-                        "name": source_xml.find("Name").text,
-                        "type": source_xml.find("Type").text,
-                    }
-                )
-            index = index + 1
-        return sources
+        return source_list.visible(source_list.parse(result["Value"]))
 
     @_translates_errors
     async def track_info(self):
@@ -472,9 +456,9 @@ class Device(object):
         action = self.product_service.action("SourceXml")
         result = await action.async_call()
 
-        for index, source_xml in enumerate(etree.fromstring(result["Value"])):
-            if source_xml.find("Type").text == "Receiver":
-                return index
+        for source in source_list.parse(result["Value"]):
+            if source["type"] == "Receiver":
+                return source["index"]
 
         return None
 
