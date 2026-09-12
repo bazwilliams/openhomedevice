@@ -8,11 +8,7 @@ from unittest import mock
 from aioresponses import aioresponses
 from async_upnp_client.exceptions import UpnpConnectionError, UpnpResponseError
 
-from openhomedevice.device import (
-    MINIMUM_RENEWAL_INTERVAL,
-    Device,
-    _renewal_time,
-)
+from openhomedevice.device import Device
 from openhomedevice.exceptions import OpenhomeConnectionError, OpenhomeDeviceError
 
 LOCATION = "http://mydevice:12345/desc.xml"
@@ -507,45 +503,9 @@ class NotifyServerTests(unittest.TestCase):
         local_ip.assert_awaited_once_with(LOCATION)
 
 
-class RenewalScheduleTests(unittest.TestCase):
-    """When a subscription falls due, given what the device actually granted.
-
-    The device grants whatever it is asked for, including durations shorter
-    than the renewal margin, so the schedule has to stay sane for those too.
-    """
-
-    def test_a_half_hour_grant_is_renewed_a_minute_early(self):
-        self.assertEqual(_renewal_time(0, timedelta(minutes=30)), 1740)
-
-    def test_a_short_grant_is_renewed_before_it_expires(self):
-        """A minute's grant renewed a minute early would already be overdue."""
-        due = _renewal_time(0, timedelta(seconds=60))
-        self.assertGreater(due, 0)
-        self.assertLess(due, 60)
-
-    def test_the_margin_never_eats_more_than_half_a_grant(self):
-        """What keeps a short grant from renewing with no wait at all."""
-        for seconds in (1, 5, 30, 60, 120, 300, 1800):
-            with self.subTest(seconds=seconds):
-                self.assertGreaterEqual(
-                    _renewal_time(0, timedelta(seconds=seconds)), seconds / 2
-                )
-
-    def test_an_absurdly_short_grant_falls_back_to_the_floor(self):
-        """Half of a few seconds is still a few seconds, so a floor applies.
-
-        Only below twice the floor: a thirty second grant is renewed at
-        fifteen, which the floor never touches.
-        """
-        floor = MINIMUM_RENEWAL_INTERVAL.total_seconds()
-        for seconds in (1, 5, 15):
-            with self.subTest(seconds=seconds):
-                self.assertEqual(_renewal_time(0, timedelta(seconds=seconds)), floor)
-
-        self.assertEqual(_renewal_time(0, timedelta(seconds=30)), 15)
-
-
-class ResubscribeTests(unittest.TestCase):
+class RenewTests(unittest.TestCase):
+    """renew() is how a caller keeps a subscription, and the only way it
+    finds out the device has stopped honouring one."""
     @async_test
     @aioresponses()
     async def test_every_subscription_is_renewed(self, mocked):
@@ -554,7 +514,7 @@ class ResubscribeTests(unittest.TestCase):
         device = await linn_device(handler)
         await device.subscribe(Recorder())
 
-        await device._resubscribe()
+        await device.renew()
 
         self.assertEqual(len(handler.resubscribed), 4)
         self.assertTrue(device.is_subscribed)
@@ -570,7 +530,7 @@ class ResubscribeTests(unittest.TestCase):
         await device.subscribe(Recorder())
         original = set(device._subscriptions)
 
-        await device._resubscribe()
+        await device.renew()
         renewed = set(device._subscriptions)
 
         self.assertEqual(renewed & original, set())
@@ -580,9 +540,14 @@ class ResubscribeTests(unittest.TestCase):
 
     @async_test
     @aioresponses()
-    async def test_a_lost_subscription_is_reported_as_a_subscription_state(
+    async def test_a_device_that_has_forgotten_us_makes_renewing_raise(
         self, mocked
     ):
+        """The only announcement of a lost subscription there is.
+
+        A device that restarted, or gave up on an event it could not
+        deliver, says nothing and answers every other request as usual.
+        """
         mock_device(mocked, "linndescription.xml", LINN_SERVICES)
         handler = FakeEventHandler()
         handler.resubscribe_error = UpnpConnectionError("device has gone")
@@ -590,10 +555,13 @@ class ResubscribeTests(unittest.TestCase):
         recorder = Recorder()
         await device.subscribe(recorder)
 
-        await device._resubscribe()
+        with self.assertRaises(OpenhomeDeviceError):
+            await device.renew()
 
-        self.assertEqual(recorder.last, {"is_subscribed": False})
         self.assertFalse(device.is_subscribed)
+        # Nothing is pushed through the callback to say so: the caller asked,
+        # so the caller is told by the call.
+        self.assertEqual(recorder.changes, [])
         await device.unsubscribe()
 
     @async_test
@@ -616,7 +584,8 @@ class ResubscribeTests(unittest.TestCase):
             raise UpnpConnectionError("device has gone")
 
         handler.async_resubscribe = fail_after_first
-        await device._resubscribe()
+        with self.assertRaises(OpenhomeDeviceError):
+            await device.renew()
 
         self.assertFalse(device.is_subscribed)
         # Nothing is left dangling on the device: the one that did renew, and
@@ -638,7 +607,8 @@ class ResubscribeTests(unittest.TestCase):
         await device.subscribe(Recorder())
 
         handler.resubscribe_error = UpnpConnectionError("powered off")
-        await device._resubscribe()
+        with self.assertRaises(OpenhomeDeviceError):
+            await device.renew()
         self.assertFalse(device.is_subscribed)
 
         handler.resubscribe_error = None
@@ -661,7 +631,8 @@ class ResubscribeTests(unittest.TestCase):
         await device.subscribe(recorder)
         service = device.volume_service
 
-        await device._resubscribe()
+        with self.assertRaises(OpenhomeDeviceError):
+            await device.renew()
         before = len(recorder.changes)
         service.notify_changed_state_variables({"Volume": "42"})
 
@@ -669,52 +640,84 @@ class ResubscribeTests(unittest.TestCase):
 
     @async_test
     @aioresponses()
-    async def test_the_renewal_loop_ends_itself_when_the_subscription_is_lost(
-        self, mocked
-    ):
-        """It must not cancel its own task doing so, which would deadlock."""
+    async def test_the_lease_the_device_granted_is_handed_back(self, mocked):
+        """The caller renews against it, so it has to come from the device.
+
+        A device caps what it grants at its own maximum, which can be less
+        than was asked for, and need not be the same on every service.
+        """
         mock_device(mocked, "linndescription.xml", LINN_SERVICES)
-        handler = FakeEventHandler(timeout=timedelta(seconds=60))
-        handler.resubscribe_error = UpnpConnectionError("device has gone")
+        handler = FakeEventHandler(timeout=timedelta(minutes=9))
         device = await linn_device(handler)
-        recorder = Recorder()
-        await device.subscribe(recorder)
 
-        # Force the renewal due, then let the loop run to completion.
-        device._subscriptions = {sid: 0 for sid in device._subscriptions}
-        task = device._resubscriber_task
-        await asyncio.wait_for(task, timeout=5)
+        self.assertEqual(await device.subscribe(Recorder()), timedelta(minutes=9))
 
-        self.assertTrue(task.done())
-        self.assertFalse(task.cancelled())
-        self.assertEqual(recorder.last, {"is_subscribed": False})
-
-    @async_test
-    @aioresponses()
-    async def test_the_renewal_loop_yields_when_a_renewal_is_overdue(self, mocked):
-        """The loop used to renew without pausing here, blocking the event
-        loop until the test run was killed."""
-        mock_device(mocked, "linndescription.xml", LINN_SERVICES)
-        handler = FakeEventHandler(timeout=timedelta(seconds=60))
-        device = await linn_device(handler)
-        await device.subscribe(Recorder())
-
-        # Force every subscription overdue, then let the loop run freely for a
-        # moment. A loop that never pauses renews thousands of times; a well
-        # behaved one sleeps until the next renewal is genuinely due.
-        device._subscriptions = {sid: 0 for sid in device._subscriptions}
-        await asyncio.sleep(0.05)
-
-        self.assertLess(len(handler.resubscribed), 100)
+        handler.timeout = timedelta(minutes=4)
+        self.assertEqual(await device.renew(), timedelta(minutes=4))
         await device.unsubscribe()
 
     @async_test
     @aioresponses()
-    async def test_the_renewal_task_stops_when_unsubscribed(self, mocked):
+    async def test_the_shortest_grant_is_the_one_reported(self, mocked):
+        """Renewing after the shortest has expired would lose that service."""
+        mock_device(mocked, "linndescription.xml", LINN_SERVICES)
+        handler = FakeEventHandler()
+        device = await linn_device(handler)
+
+        leases = iter(
+            [timedelta(minutes=9), timedelta(minutes=2), timedelta(minutes=7)]
+        )
+        original = handler.async_subscribe
+
+        async def varying(service, timeout=None):
+            sid, _ = await original(service, timeout=timeout)
+            return sid, next(leases, timedelta(minutes=9))
+
+        handler.async_subscribe = varying
+
+        self.assertEqual(await device.subscribe(Recorder()), timedelta(minutes=2))
+        await device.unsubscribe()
+
+    @async_test
+    @aioresponses()
+    async def test_the_lease_asked_for_is_the_callers_to_choose(self, mocked):
+        mock_device(mocked, "linndescription.xml", LINN_SERVICES)
+        handler = FakeEventHandler()
+        asked = []
+        original = handler.async_subscribe
+
+        async def record(service, timeout=None):
+            asked.append(timeout)
+            return await original(service, timeout=timeout)
+
+        handler.async_subscribe = record
+        device = await linn_device(handler)
+
+        await device.subscribe(Recorder(), timeout=timedelta(minutes=5))
+
+        self.assertEqual(set(asked), {timedelta(minutes=5)})
+        await device.unsubscribe()
+
+    @async_test
+    @aioresponses()
+    async def test_renewing_without_a_subscription_is_refused(self, mocked):
+        """There is nothing to renew, and subscribe() is what is wanted."""
         mock_device(mocked, "linndescription.xml", LINN_SERVICES)
         device = await linn_device(FakeEventHandler())
 
-        await device.subscribe(Recorder())
-        await device.unsubscribe()
+        with self.assertRaises(OpenhomeDeviceError):
+            await device.renew()
 
-        self.assertIsNone(device._resubscriber_task)
+    @async_test
+    @aioresponses()
+    async def test_nothing_renews_on_its_own(self, mocked):
+        """The schedule belongs to the caller: this library keeps no timers."""
+        mock_device(mocked, "linndescription.xml", LINN_SERVICES)
+        handler = FakeEventHandler(timeout=timedelta(seconds=1))
+        device = await linn_device(handler)
+        await device.subscribe(Recorder())
+
+        await asyncio.sleep(0.05)
+
+        self.assertEqual(handler.resubscribed, [])
+        await device.unsubscribe()

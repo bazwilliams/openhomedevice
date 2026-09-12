@@ -69,13 +69,13 @@ except OpenhomeDeviceError:
 ### Events
 
 Rather than polling, a device can be asked to push its changes. `subscribe`
-takes a callback and returns once the device has accepted the subscription:
+takes a callback and returns the lease the device granted:
 
 ```python
 def on_event(changes):
     print(changes)  # {"volume": 42, "is_muted": False}
 
-await device.subscribe(on_event)
+lease = await device.subscribe(on_event)
 ...
 await device.unsubscribe()
 ```
@@ -98,7 +98,6 @@ the matching method would have returned:
 | `can_skip_next` | Transport | `can_skip_next()` |
 | `can_skip_previous` | Transport | `can_skip_previous()` |
 | `track_info` | Info | `track_info()` |
-| `is_subscribed` | — | `is_subscribed`, on losing the subscription |
 
 The first callback after subscribing carries the device's whole state, because
 that is what a device sends when a subscription begins. After that only the
@@ -109,24 +108,35 @@ A callback that raises is logged and otherwise ignored: the notify server
 behind a subscription may be shared with other devices, and one broken
 callback must not stop the rest of them receiving anything.
 
-#### Losing a subscription
+#### Keeping a subscription
 
-Subscriptions expire, and are renewed in the background for as long as they
-last. If one cannot be renewed, usually because the device has gone off the
-network, the rest are released and the callback is called a final time with
-`is_subscribed` set to `False`. No further events arrive after that:
+A subscription lasts as long as the lease `subscribe` returned, and nothing
+here renews it for you. Call `renew` before the lease runs out, on whatever
+schedule suits you, and renew against what it returns rather than what you
+asked for: a device caps the lease at its own maximum.
 
 ```python
-def on_event(changes):
-    if changes.get("is_subscribed") is False:
-        ...  # state is now stale; resubscribe or go back to polling
-        return
+lease = await device.subscribe(on_event)
+while True:
+    await asyncio.sleep(lease.total_seconds() - 60)
+    try:
+        lease = await device.renew()
+    except OpenhomeError:
+        lease = await device.subscribe(on_event)
 ```
 
-It is all or nothing: one subscription that cannot be renewed ends them all,
-because holding half a subscription is worse than holding none. Some values
-would go stale while others kept arriving, with no way to tell which were
-which. `is_subscribed` on the device agrees with the event.
+Renewing is also the only way to discover that a device has stopped
+honouring a subscription. A device that restarted, or that gave up on an
+event it could not deliver, is not obliged to say so and does not: it
+answers every other request exactly as before, and simply never sends
+another event. `renew` raises `OpenhomeDeviceError` when that has happened,
+having released everything first, so `is_subscribed` is already `False` and
+`subscribe` is what picks the device back up.
+
+Renewing is all or nothing: one subscription that cannot be renewed ends
+them all, because holding half a subscription is worse than holding none.
+Some values would go stale while others kept arriving, with no way to tell
+which were which.
 
 #### Devices that cannot be subscribed to
 
