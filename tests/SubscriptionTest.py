@@ -109,6 +109,9 @@ class FakeEventHandler:
         self.timeout = timeout
         self.fail_after = None
         self.resubscribe_error = None
+        # The device answers, but no longer knows the subscription.
+        self.forgotten = False
+        self.subscribed_afresh = []
         self._sid_count = 0
 
     def _next_sid(self):
@@ -126,8 +129,17 @@ class FakeEventHandler:
         return sid
 
     async def async_resubscribe(self, sid, timeout=None):
+        """Renew, or subscribe afresh where the device has forgotten the SID.
+
+        As UpnpEventHandler does: a device that cannot be reached raises,
+        and anything else it answers with, a refusal included, is followed
+        by a full subscribe in place of the renewal.
+        """
         if self.resubscribe_error is not None:
             raise self.resubscribe_error
+        if self.forgotten:
+            self.subscribed_afresh.append(sid)
+            return self._next_sid(), self.timeout
         self.resubscribed.append(sid)
         return self._next_sid(), self.timeout
 
@@ -540,14 +552,38 @@ class RenewTests(unittest.TestCase):
 
     @async_test
     @aioresponses()
-    async def test_a_device_that_has_forgotten_us_makes_renewing_raise(
+    async def test_a_device_that_has_forgotten_us_is_subscribed_afresh(
         self, mocked
     ):
-        """The only announcement of a lost subscription there is.
+        """Renewing puts right what nothing reports.
 
         A device that restarted, or gave up on an event it could not
-        deliver, says nothing and answers every other request as usual.
+        deliver, says nothing and answers every other request as usual. It
+        refuses the renewal, and a new subscription is taken out in place
+        of the one it has forgotten.
         """
+        mock_device(mocked, "linndescription.xml", LINN_SERVICES)
+        handler = FakeEventHandler()
+        handler.forgotten = True
+        device = await linn_device(handler)
+        recorder = Recorder()
+        await device.subscribe(recorder)
+        original = set(device._subscriptions)
+
+        lease = await device.renew()
+
+        self.assertEqual(lease, handler.timeout)
+        self.assertTrue(device.is_subscribed)
+        self.assertEqual(len(handler.subscribed_afresh), 4)
+        self.assertEqual(set(device._subscriptions) & original, set())
+        # Nothing is pushed through the callback to say any of this happened.
+        self.assertEqual(recorder.changes, [])
+        await device.unsubscribe()
+
+    @async_test
+    @aioresponses()
+    async def test_an_unreachable_device_makes_renewing_raise(self, mocked):
+        """What a refusal is not: a device that cannot be reached at all."""
         mock_device(mocked, "linndescription.xml", LINN_SERVICES)
         handler = FakeEventHandler()
         handler.resubscribe_error = UpnpConnectionError("device has gone")
@@ -559,8 +595,6 @@ class RenewTests(unittest.TestCase):
             await device.renew()
 
         self.assertFalse(device.is_subscribed)
-        # Nothing is pushed through the callback to say so: the caller asked,
-        # so the caller is told by the call.
         self.assertEqual(recorder.changes, [])
         await device.unsubscribe()
 

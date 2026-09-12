@@ -198,11 +198,17 @@ class Device(object):
 
         Returns the lease the device granted, as subscribe() does.
 
-        Raises OpenhomeDeviceError when the device no longer recognises a
-        subscription, which is how a device that restarted or gave up on an
-        undeliverable event says so: nothing else announces it. Everything
-        is released first, so is_subscribed is False by the time this
-        raises and subscribe() is what picks the device back up.
+        A device that restarted, or that gave up on an event it could not
+        deliver, has forgotten the subscription and says nothing about it.
+        Renewing one it has forgotten is refused, and a fresh subscription
+        taken out in its place, so this still returns a lease and the device
+        sends its whole state again as the first event under the new
+        subscription. That is the only sign the caller gets.
+
+        Raises OpenhomeDeviceError when the device cannot be reached, or
+        refuses a new subscription as well. Everything is released first,
+        so is_subscribed is False by the time this raises and subscribe()
+        is what picks the device back up.
 
         It is all or nothing. Half a subscription is worse than none, since
         some values would go stale while others kept arriving with no way to
