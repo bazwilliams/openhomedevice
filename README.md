@@ -211,7 +211,8 @@ silent.
 #### Control
 
 ```python
-    await subscribe(callback) #push changes to callback instead of polling
+    await subscribe(callback) #push changes to callback, returns the lease
+    await renew() #take the subscription out again, returns the lease
     await unsubscribe() #stop receiving changes
     await set_standby(standbyRequested) #bool
     await play() #starts playback
@@ -256,11 +257,8 @@ silent.
     await can_pause() #true if what is playing can be paused, None if unknown
     await can_skip_next() #true if the next track can be skipped to
     await can_skip_previous() #true if the previous track can be skipped to
-<<<<<<< HEAD
-=======
     is_subscribed #property true while subscribed to the device's events
     events_enabled #property true if this device can be subscribed to
->>>>>>> 9f27828 (Subscribe to device events instead of polling)
     volume_enabled #property true if the volume service is available
     await volume() #returns the volume setting or None if disabled
     await is_muted() #returns true if muted or None if disabled
