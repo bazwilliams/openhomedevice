@@ -3,7 +3,6 @@ import functools
 import inspect
 import json
 import logging
-import time
 from datetime import timedelta
 
 from async_upnp_client.client_factory import UpnpFactory
@@ -45,15 +44,9 @@ from openhomedevice.exceptions import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# What subscribe() and renew() ask for when the caller says nothing. The
+# device caps this at its own maximum, and both return what it granted.
 SUBSCRIBE_TIMEOUT = timedelta(minutes=30)
-RESUBSCRIBE_TOLERANCE = timedelta(minutes=1)
-MINIMUM_RENEWAL_INTERVAL = timedelta(seconds=10)
-
-
-def _renewal_time(now, timeout):
-    granted = timeout.total_seconds()
-    margin = min(RESUBSCRIBE_TOLERANCE.total_seconds(), granted / 2)
-    return now + max(granted - margin, MINIMUM_RENEWAL_INTERVAL.total_seconds())
 
 
 def _translates_errors(func):
@@ -107,10 +100,8 @@ class Device(object):
 
         self._event_handler = event_handler
         self._notify_server = None
-        # SID of each live subscription, against the monotonic time it needs
-        # renewing by.
-        self._subscriptions = {}
-        self._resubscriber_task = None
+        # The SID of each live subscription.
+        self._subscriptions = []
         self._callback = None
         self._translator = None
         self._callback_tasks = set()
@@ -155,7 +146,7 @@ class Device(object):
         )
 
     @_translates_errors
-    async def subscribe(self, callback):
+    async def subscribe(self, callback, timeout=SUBSCRIBE_TIMEOUT):
         """Call callback with a dict of changes whenever the device reports one.
 
         Each key is named for the method returning the same value, and only
@@ -166,9 +157,11 @@ class Device(object):
         Raises OpenhomeDeviceError when events_enabled is False. Subscribing
         again replaces the callback rather than stacking.
 
-        Subscriptions are renewed in the background. If one cannot be renewed
-        the rest are released and the callback is called a final time with
-        {"is_subscribed": False}, after which no further events arrive.
+        Returns the lease the device granted, which is the shortest of the
+        grants across the services subscribed to and no longer than timeout.
+        A subscription lasts only that long: call renew() before it runs out
+        or the device forgets it and stops sending events. Nothing here
+        renews on your behalf.
         """
         if not self.events_enabled:
             raise OpenhomeDeviceError(
@@ -183,31 +176,72 @@ class Device(object):
         self._translator = EventTranslator()
         event_handler = await self._ensure_event_handler()
 
-        now = time.monotonic()
+        granted = []
         try:
             for service in self._evented_services():
                 service.on_event = self._on_event
-                sid, timeout = await event_handler.async_subscribe(
-                    service, timeout=SUBSCRIBE_TIMEOUT
+                sid, lease = await event_handler.async_subscribe(
+                    service, timeout=timeout
                 )
-                self._subscriptions[sid] = _renewal_time(now, timeout)
+                self._subscriptions.append(sid)
+                granted.append(lease)
         except UpnpError:
             # A caller whose subscribe() raised will not call unsubscribe().
             await self.unsubscribe()
             raise
 
-        self._resubscriber_task = asyncio.create_task(
-            self._resubscribe_loop(),
-            name=f"openhomedevice resubscriber for {self.location}",
-        )
+        return min(granted)
+
+    @_translates_errors
+    async def renew(self, timeout=SUBSCRIBE_TIMEOUT):
+        """Take out the subscriptions again before the device drops them.
+
+        Returns the lease the device granted, as subscribe() does.
+
+        Raises OpenhomeDeviceError when the device no longer recognises a
+        subscription, which is how a device that restarted or gave up on an
+        undeliverable event says so: nothing else announces it. Everything
+        is released first, so is_subscribed is False by the time this
+        raises and subscribe() is what picks the device back up.
+
+        It is all or nothing. Half a subscription is worse than none, since
+        some values would go stale while others kept arriving with no way to
+        tell which.
+        """
+        if not self._subscriptions:
+            raise OpenhomeDeviceError("This device is not subscribed to.")
+
+        event_handler = self._active_event_handler
+        pending = self._subscriptions
+        # Emptied up front so is_subscribed is honest whichever way this goes.
+        self._subscriptions = []
+
+        renewed = []
+        granted = []
+        for position, sid in enumerate(pending):
+            try:
+                new_sid, lease = await event_handler.async_resubscribe(
+                    sid, timeout=timeout
+                )
+            except (UpnpError, KeyError) as err:
+                _LOGGER.debug("Could not renew subscription %s: %r", sid, err)
+                await self._teardown(renewed + pending[position + 1 :])
+                raise OpenhomeDeviceError(
+                    f"The device no longer holds subscription {sid}"
+                ) from err
+
+            renewed.append(new_sid)
+            granted.append(lease)
+
+        self._subscriptions = renewed
+        return min(granted)
 
     async def unsubscribe(self):
         """Stop receiving events. Never raises, and safe when not subscribed."""
-        # Emptied before awaiting, so the renewal loop cannot renew one of these.
-        sids = list(self._subscriptions)
-        self._subscriptions.clear()
+        # Emptied before awaiting, so a renewal racing this cannot revive one.
+        sids = self._subscriptions
+        self._subscriptions = []
 
-        await self._stop_resubscriber()
         await self._teardown(sids)
 
     async def _teardown(self, sids):
@@ -294,55 +328,6 @@ class Device(object):
             # asyncio only holds a weak reference, so keep one until it ends.
             self._callback_tasks.add(task)
             task.add_done_callback(self._callback_tasks.discard)
-
-    async def _resubscribe_loop(self):
-        while self._subscriptions:
-            due = min(self._subscriptions.values())
-            # Always sleeps, even when overdue, so a renewal that is already
-            # due cannot loop round without pausing and block the event loop.
-            await asyncio.sleep(max(due - time.monotonic(), 0))
-            await self._resubscribe()
-
-    async def _resubscribe(self):
-        """Half a subscription is worse than none: some values would go
-        stale while others kept arriving, with no way to tell which."""
-        event_handler = self._active_event_handler
-        if event_handler is None:
-            return
-
-        now = time.monotonic()
-        # Emptied up front so is_subscribed is honest whichever way this goes.
-        pending = list(self._subscriptions)
-        self._subscriptions.clear()
-        renewed = {}
-
-        for position, sid in enumerate(pending):
-            try:
-                new_sid, timeout = await event_handler.async_resubscribe(
-                    sid, timeout=SUBSCRIBE_TIMEOUT
-                )
-            except (UpnpError, KeyError) as err:
-                _LOGGER.warning("Could not renew subscription %s: %r", sid, err)
-                # Before the teardown, which lets go of the callback.
-                self._deliver({"is_subscribed": False})
-                await self._teardown(list(renewed) + pending[position + 1 :])
-                return
-
-            renewed[new_sid] = _renewal_time(now, timeout)
-
-        self._subscriptions = renewed
-
-    async def _stop_resubscriber(self):
-        task = self._resubscriber_task
-        if task is None:
-            return
-
-        self._resubscriber_task = None
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
 
     def uuid(self):
         return self.device.udn

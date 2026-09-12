@@ -8,8 +8,8 @@ variable from its wire format are all exercised rather than assumed.
 
 import os
 import re
-import time
 import unittest
+from datetime import timedelta
 
 from aioresponses import aioresponses
 from async_upnp_client.const import HttpRequest, HttpResponse
@@ -300,7 +300,7 @@ class RenewalTests(unittest.IsolatedAsyncioTestCase):
         recorder = Recorder()
         await device.subscribe(recorder)
 
-        await device._resubscribe()
+        await device.renew()
 
         sid = handler.sid_for_service(device.volume_service)
         request = HttpRequest(
@@ -315,20 +315,19 @@ class RenewalTests(unittest.IsolatedAsyncioTestCase):
         await device.unsubscribe()
 
     @aioresponses()
-    async def test_a_short_grant_is_still_renewed_in_good_time(self, mocked):
-        """A device may grant far less than the half hour it was asked for."""
+    async def test_a_short_grant_is_reported_as_the_device_gave_it(self, mocked):
+        """A device may grant far less than the half hour it was asked for.
+
+        The caller renews against what came back, so a grant read wrongly
+        here would have it renew too late and lose the subscription.
+        """
         mock_device(mocked)
         requester = FakeRequester(timeout=60)
         handler = UpnpEventHandler(FakeNotifyServer(), requester)
         device = Device(LOCATION, event_handler=handler)
         await device.init()
 
-        await device.subscribe(Recorder())
+        granted = await device.subscribe(Recorder())
 
-        # Due before the minute is up, but not immediately.
-        for due in device._subscriptions.values():
-            remaining = due - time.monotonic()
-            self.assertGreater(remaining, 5)
-            self.assertLess(remaining, 60)
-
+        self.assertEqual(granted, timedelta(seconds=60))
         await device.unsubscribe()
