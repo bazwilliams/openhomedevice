@@ -1,11 +1,7 @@
 import unittest
 
 from openhomedevice.device import Device
-from openhomedevice.events import (
-    _LIFECYCLE_KEYS,
-    EVENT_KEYS,
-    EventTranslator,
-)
+from openhomedevice.events import EVENT_KEYS, EventTranslator
 from openhomedevice.services import (
     INFO_SERVICE_ID,
     PRODUCT_SERVICE_ID,
@@ -273,9 +269,5 @@ class EventVocabularyTests(unittest.TestCase):
                 SourceIndex=1,
             )
         )
-        self.assertEqual(produced, set(EVENT_KEYS) - set(_LIFECYCLE_KEYS))
-
-    def test_the_subscription_state_key_is_a_device_property(self):
-        """Losing a subscription is reported with a key, not an empty dict."""
-        self.assertEqual(_LIFECYCLE_KEYS, {"is_subscribed"})
+        self.assertEqual(produced, set(EVENT_KEYS))
         self.assertIsInstance(Device.is_subscribed, property)
