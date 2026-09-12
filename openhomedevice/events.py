@@ -39,16 +39,11 @@ _SIMPLE_VARIABLES = {
 # Produced in translate() rather than by the table above.
 _DERIVED_KEYS = frozenset({"source", "sources", "track_info"})
 
-# Reported by the Device rather than translated from a variable.
-_LIFECYCLE_KEYS = frozenset({"is_subscribed"})
-
-_TRANSLATED_KEYS = (
+# Every key an event can carry.
+EVENT_KEYS = (
     frozenset(key for mapping in _SIMPLE_VARIABLES.values() for key in mapping.values())
     | _DERIVED_KEYS
 )
-
-# Every key an event can carry.
-EVENT_KEYS = _TRANSLATED_KEYS | _LIFECYCLE_KEYS
 
 
 class EventTranslator:
