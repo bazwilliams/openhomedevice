@@ -1,0 +1,80 @@
+name: Publish
+
+on:
+  push:
+    tags: ['[0-9]*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: setup.py
+
+      - name: Install
+        run: python -m pip install --upgrade pip build twine
+
+      - name: Test
+        run: |
+          python -m pip install . -r requirements-test.txt
+          PYTHONPATH=. pytest ./tests/* -q
+
+      - name: Build
+        run: |
+          python -m build
+          python -m twine check dist/*
+
+      # A version can only be uploaded once, so a tag that disagrees with
+      # setup.py has to fail here rather than spend the wrong one.
+      - name: Check the tag matches what was built
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          if [ ! -f "dist/openhomedevice-$tag.tar.gz" ]; then
+            echo "Tag $tag does not match the built artifacts:" >&2
+            ls -1 dist/ >&2
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only a pushed tag publishes. workflow_dispatch can be pointed at a
+    # tag too, so gating on the ref alone would let a manual run upload.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/openhomedevice
+
+    # Trusted Publishing: PyPI accepts a short lived token minted for this
+    # workflow, so there is no API token stored anywhere to leak or rotate.
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # The sdist and the wheel go up in one call. Without this, a wheel
+          # that fails after the sdist landed leaves the tag unreleasable.
+          skip-existing: true
