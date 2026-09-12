@@ -485,27 +485,15 @@ every mocked request fails. The pin can go once `aioresponses` catches up.
 
 ## Releasing
 
-Following guide from https://packaging.python.org/tutorials/packaging-projects/
-
-Update `version` in `setup.py`, then tag the release and publish to PyPI:
-
-```sh
-rm -rf dist
-python3 -m build
-python3 -m twine check dist/*
-git tag <version> && git push origin <version>
-python3 -m twine upload dist/*
-```
-
-`dist` is cleared first because it keeps the artifacts of previous releases,
-and `twine upload dist/*` would then try to upload a version that is already
-on PyPI.
-
-Then publish a GitHub release for that tag:
+Update `version` in `setup.py` and merge that, then tag and release:
 
 ```sh
 gh release create <version> --generate-notes
 ```
+
+Tagging is what publishes: `.github/workflows/publish.yml` builds, tests and
+uploads to PyPI, using the Trusted Publisher registered at
+https://pypi.org/manage/project/openhomedevice/settings/publishing/.
 
 `--generate-notes` writes the release notes from the pull requests and commits
 merged since the previous release, so contributions that arrived as PRs are
