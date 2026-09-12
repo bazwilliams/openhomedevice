@@ -125,13 +125,17 @@ while True:
         lease = await device.subscribe(on_event)
 ```
 
-Renewing is also the only way to discover that a device has stopped
-honouring a subscription. A device that restarted, or that gave up on an
-event it could not deliver, is not obliged to say so and does not: it
-answers every other request exactly as before, and simply never sends
-another event. `renew` raises `OpenhomeDeviceError` when that has happened,
-having released everything first, so `is_subscribed` is already `False` and
-`subscribe` is what picks the device back up.
+Renewing is also what puts a lost subscription right. A device that
+restarted, or that gave up on an event it could not deliver, is not obliged
+to say so and does not: it answers every other request exactly as before,
+and simply never sends another event. Renewing takes the subscription out
+again, transparently where the device is there to answer, so events resume
+without the caller being told anything happened.
+
+`renew` raises `OpenhomeDeviceError` only where that cannot be done at all,
+which in practice means the device is unreachable. It releases everything
+first, so `is_subscribed` is already `False` and `subscribe` is what picks
+the device back up.
 
 Renewing is all or nothing: one subscription that cannot be renewed ends
 them all, because holding half a subscription is worse than holding none.
