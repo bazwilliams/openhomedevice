@@ -1,7 +1,6 @@
 pytest
 aioresponses
 
-# aioresponses builds an aiohttp ClientResponse by hand, and aiohttp 3.14 added
-# a required stream_writer argument to its constructor, so every mocked request
-# raises TypeError. Drop this pin once aioresponses supports aiohttp 3.14.
-aiohttp<3.14
+# The first aiohttp release without the advisories Dependabot raised. It needs
+# the stream_writer shim in tests/conftest.py until aioresponses catches up.
+aiohttp>=3.14.4
