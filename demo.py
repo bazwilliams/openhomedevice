@@ -120,11 +120,14 @@ async def main():
     # The first event carries the whole state, then only what changes.
     await asyncio.sleep(2)
 
-    volume = await watched.volume()
-    await watched.set_volume(volume + 1)
-    await asyncio.sleep(2)
-    await watched.set_volume(volume)
-    await asyncio.sleep(2)
+    if watched.volume_enabled:
+        volume = await watched.volume()
+        await watched.set_volume(volume + 1)
+        await asyncio.sleep(2)
+        await watched.set_volume(volume)
+        await asyncio.sleep(2)
+    else:
+        print("Skipping volume demo")
 
     await watched.unsubscribe()
     print("SUBSCRIBED: %s" % watched.is_subscribed)
