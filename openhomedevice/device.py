@@ -48,6 +48,27 @@ _LOGGER = logging.getLogger(__name__)
 # device caps this at its own maximum, and both return what it granted.
 SUBSCRIBE_TIMEOUT = timedelta(minutes=30)
 
+# Devices answer a query in milliseconds, so three attempts fit comfortably
+# inside a 10 second polling interval.
+QUERY_TIMEOUT = 2
+QUERY_ATTEMPTS = 3
+
+
+async def _query(action, **kwargs):
+    """Call an action that only reads state, re-sending it on a timeout.
+
+    Some Linn devices occasionally never answer a request. async_upnp_client
+    stopped retrying timeouts in 0.49 because re-sending a command could
+    repeat it, so the retry lives here, and only for queries.
+    """
+    for attempt in range(1, QUERY_ATTEMPTS + 1):
+        try:
+            return await action.async_call(request_timeout=QUERY_TIMEOUT, **kwargs)
+        except UpnpConnectionTimeoutError:
+            if attempt == QUERY_ATTEMPTS:
+                raise
+            _LOGGER.debug("%s timed out, retrying", getattr(action, "name", action))
+
 
 def _translates_errors(func):
     """Re-raise async_upnp_client errors as this library's own.
@@ -344,12 +365,12 @@ class Device(object):
     @_translates_errors
     async def name(self):
         action = self.product_service.action("Product")
-        return (await action.async_call())["Name"]
+        return (await _query(action))["Name"]
 
     @_translates_errors
     async def room(self):
         action = self.product_service.action("Product")
-        return (await action.async_call())["Room"]
+        return (await _query(action))["Room"]
 
     @_translates_errors
     async def set_standby(self, standby_requested):
@@ -360,33 +381,33 @@ class Device(object):
     @_translates_errors
     async def is_in_standby(self):
         action = self.product_service.action("Standby")
-        return (await action.async_call())["Value"]
+        return (await _query(action))["Value"]
 
     @_translates_errors
     async def transport_state(self):
         if self.transport_service:
             action = self.transport_service.action("TransportState")
-            return (await action.async_call()).get("State")
+            return (await _query(action)).get("State")
 
         if (await self.source())["type"] == "Radio":
             action = self.radio_service.action("TransportState")
-            return (await action.async_call()).get("Value")
+            return (await _query(action)).get("Value")
 
         action = self.playlist_service.action("TransportState")
-        return (await action.async_call()).get("Value")
+        return (await _query(action)).get("Value")
 
     async def _stream_capability(self, name):
         if self.transport_service is None:
             return None
 
-        result = await self.transport_service.action("StreamInfo").async_call()
+        result = await _query(self.transport_service.action("StreamInfo"))
         return result.get(name)
 
     async def _mode_capability(self, name):
         if self.transport_service is None:
             return None
 
-        result = await self.transport_service.action("ModeInfo").async_call()
+        result = await _query(self.transport_service.action("ModeInfo"))
         return result.get(name)
 
     @_translates_errors
@@ -464,9 +485,9 @@ class Device(object):
     @_translates_errors
     async def source(self):
         index_action = self.product_service.action("SourceIndex")
-        source_index = (await index_action.async_call())["Value"]
+        source_index = (await _query(index_action))["Value"]
         source_action = self.product_service.action("Source")
-        source_result = await source_action.async_call(Index=source_index)
+        source_result = await _query(source_action, Index=source_index)
         return {"type": source_result["Type"], "name": source_result["Name"]}
 
     @property
@@ -479,7 +500,7 @@ class Device(object):
             return None
 
         action = self.volume_service.action("Volume")
-        return (await action.async_call())["Value"]
+        return (await _query(action))["Value"]
 
     @_translates_errors
     async def is_muted(self):
@@ -487,7 +508,7 @@ class Device(object):
             return None
 
         action = self.volume_service.action("Mute")
-        result = await action.async_call()
+        result = await _query(action)
         return result["Value"]
 
     @_translates_errors
@@ -518,13 +539,13 @@ class Device(object):
     @_translates_errors
     async def sources(self):
         action = self.product_service.action("SourceXml")
-        result = await action.async_call()
+        result = await _query(action)
         return source_list.visible(source_list.parse(result["Value"]))
 
     @_translates_errors
     async def track_info(self):
         action = self.info_service.action("Track")
-        result = await action.async_call()
+        result = await _query(action)
         return didl_lite.parse(result["Metadata"])
 
     @property
@@ -533,12 +554,12 @@ class Device(object):
 
     async def _get_pin_id_array(self):
         action = self.pins_service.action("GetIdArray")
-        result = await action.async_call()
+        result = await _query(action)
         return json.loads(result["IdArray"])
 
     async def _pin_metadata(self, ids):
         action = self.pins_service.action("ReadList")
-        result = await action.async_call(Ids=json.dumps(ids))
+        result = await _query(action, Ids=json.dumps(ids))
         return json.loads(result["List"])
 
     @_translates_errors
@@ -547,7 +568,7 @@ class Device(object):
             return []
 
         action = self.pins_service.action("GetDeviceMax")
-        max_pins = (await action.async_call())["DeviceMax"]
+        max_pins = (await _query(action))["DeviceMax"]
         pin_id_array = await self._get_pin_id_array()
         pin_metadata = await self._pin_metadata(pin_id_array)
 
@@ -571,7 +592,7 @@ class Device(object):
     async def software_status(self):
         if self.update_service:
             action = self.update_service.action("GetSoftwareStatus")
-            result = await action.async_call()
+            result = await _query(action)
             return json.loads(result["SoftwareStatus"])
 
     @_translates_errors
@@ -599,7 +620,7 @@ class Device(object):
             return None
 
         action = self.sender_service.action("Status")
-        return (await action.async_call())["Value"]
+        return (await _query(action))["Value"]
 
     @_translates_errors
     async def songcast_sender_audio(self):
@@ -608,7 +629,7 @@ class Device(object):
             return None
 
         action = self.sender_service.action("Audio")
-        return (await action.async_call())["Value"]
+        return (await _query(action))["Value"]
 
     @_translates_errors
     async def songcast_sender(self):
@@ -617,7 +638,7 @@ class Device(object):
             return None
 
         action = self.sender_service.action("Metadata")
-        metadata = (await action.async_call())["Value"]
+        metadata = (await _query(action))["Value"]
         uri = didl_lite.parse(metadata).get("uri")
 
         if not uri:
@@ -632,7 +653,7 @@ class Device(object):
             return None
 
         action = self.receiver_service.action("Sender")
-        result = await action.async_call()
+        result = await _query(action)
         uri = result.get("Uri")
 
         if not uri:
@@ -646,12 +667,12 @@ class Device(object):
             return None
 
         action = self.receiver_service.action("TransportState")
-        return (await action.async_call())["Value"]
+        return (await _query(action))["Value"]
 
     async def _receiver_source_index(self):
         """Index of the Receiver source, which may be hidden from sources()."""
         action = self.product_service.action("SourceXml")
-        result = await action.async_call()
+        result = await _query(action)
 
         for source in source_list.parse(result["Value"]):
             if source["type"] == "Receiver":
@@ -678,7 +699,7 @@ class Device(object):
         if index is None:
             return
 
-        current = (await self.product_service.action("SourceIndex").async_call())[
+        current = (await _query(self.product_service.action("SourceIndex")))[
             "Value"
         ]
         if current != index:
