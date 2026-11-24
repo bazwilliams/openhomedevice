@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="openhomedevice",
-    version="2.7",
+    version="2.8",
     author="Barry John Williams",
     author_email="barry@bjw.me.uk",
     description="Provides an API for requesting information from an Openhome device",
