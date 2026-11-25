@@ -18,7 +18,7 @@ setuptools.setup(
     },
     packages=setuptools.find_packages(exclude=["tests", "tools"]),
     keywords=["upnp", "dlna", "openhome", "linn", "ds", "music", "render", "async"],
-    install_requires=["async_upnp_client>=0.49"],
+    install_requires=["async_upnp_client>=0.40"],
     license="MIT",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
